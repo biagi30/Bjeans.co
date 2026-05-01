@@ -3,47 +3,79 @@
 :root {
   --background: #fafafa;
   --foreground: #0a0a0b;
-  
-  --primary: #4f46e5; /* Electric Indigo */
+
+  --primary: #0a0a0b; /* Classy Obsidian */
   --primary-foreground: #ffffff;
-  
+
   --secondary: #f4f4f5;
   --secondary-foreground: #18181b;
-  
-  --accent: #4f46e5;
+
+  --accent: #27272a;
   --accent-foreground: #ffffff;
-  
+
   --muted: #f4f4f5;
   --muted-foreground: #71717a;
-  
+
   --border: #e4e4e7;
   --input: #e4e4e7;
-  --ring: #4f46e5;
+  --ring: #0a0a0b;
+
+  --card: #ffffff;
+  --card-foreground: #18181b;
+
+  --surface: #f8f8f9;
+  --surface-elevated: #ffffff;
 
   --radius: 0.75rem;
-  --hero-glow: radial-gradient(circle at 20% 20%, rgba(79, 70, 229, 0.28), transparent 45%),
-    radial-gradient(circle at 80% 0%, rgba(99, 102, 241, 0.18), transparent 42%);
+  --hero-glow: radial-gradient(
+      circle at 20% 20%,
+      rgba(10, 10, 11, 0.04),
+      transparent 45%
+    ),
+    radial-gradient(circle at 80% 0%, rgba(10, 10, 11, 0.03), transparent 42%);
+
+  --nav-bg: rgba(250, 250, 250, 0.85);
 }
 
 .dark {
-  --background: #0a0a0b; /* Obsidian */
-  --foreground: #fafafa;
-  
-  --primary: #6366f1;
-  --primary-foreground: #ffffff;
-  
-  --secondary: #18181b;
-  --secondary-foreground: #fafafa;
-  
-  --accent: #6366f1;
+  /* Dark Indigo Denim */
+  --background: #0a101f;
+  --foreground: #f0f0f2;
+
+  --primary: #f0f0f2; /* Ivory */
+  --primary-foreground: #0a101f;
+
+  --secondary: #162035;
+  --secondary-foreground: #f0f0f2;
+
+  --accent: #1e293b;
   --accent-foreground: #ffffff;
-  
-  --muted: #18181b;
-  --muted-foreground: #a1a1aa;
-  
-  --border: #27272a;
-  --input: #27272a;
-  --ring: #6366f1;
+
+  --muted: #162035;
+  --muted-foreground: #9ca3af;
+
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #f0f0f2;
+
+  --card: #0f172a;
+  --card-foreground: #f0f0f2;
+
+  --surface: #0a101f;
+  --surface-elevated: #162035;
+
+  --hero-glow: radial-gradient(
+      circle at 20% 20%,
+      rgba(255, 255, 255, 0.05),
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at 80% 0%,
+      rgba(255, 255, 255, 0.03),
+      transparent 42%
+    );
+
+  --nav-bg: rgba(10, 16, 31, 0.85);
 }
 
 @theme inline {
@@ -60,6 +92,10 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
   --font-sans: var(--font-space);
   --font-display: var(--font-playfair);
 }
@@ -72,6 +108,14 @@
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+  .dark body {
+    background-image: 
+      linear-gradient(rgba(10, 16, 31, 0.90), rgba(10, 16, 31, 0.95)),
+      url("https://images.unsplash.com/photo-1531169509526-f8f1fdaa4a67?auto=format&fit=crop&w=1920&q=80");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+  }
   h1,
   h2,
   h3,
@@ -82,15 +126,26 @@
 
 /* Custom Utilities for 2026 premium feel */
 .glass-panel {
-  @apply bg-background/60 backdrop-blur-xl border border-white/10;
+  background: var(--nav-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.glass-card {
+  @apply border border-border bg-card;
+}
+
+.dark .glass-card {
+  background: rgba(20, 24, 32, 0.6);
+  border-color: rgba(255, 255, 255, 0.06);
 }
 
 .indigo-glow {
-  box-shadow: 0 0 20px -5px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 0 20px -5px rgba(10, 10, 11, 0.15);
 }
 
 .dark .indigo-glow {
-  box-shadow: 0 0 30px -10px rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 30px -10px rgba(255, 255, 255, 0.2);
 }
 
 .landing-hero {
@@ -102,7 +157,10 @@
 }
 
 .grain-overlay {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.03) 1px,
+    transparent 1px
+  );
   background-size: 120px 120px;
   mix-blend-mode: soft-light;
   opacity: 0.6;
@@ -125,4 +183,26 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Hover card lift */
+.card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.15);
+}
+.dark .card-hover:hover {
+  box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* Section divider */
+.section-divider {
+  @apply border-t border-border;
+}
+
+/* Green accent for about page */
+.green-accent {
+  background: linear-gradient(135deg, #10b981, #059669);
 }

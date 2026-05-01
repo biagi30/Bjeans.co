@@ -1,10 +1,12 @@
 export { Button } from "./Button";
 export { Container } from "./Container";
+export { Navbar } from "./Navbar";
 export { Pill } from "./Pill";
 export { ProductCard } from "./ProductCard";
 export { SectionHeader } from "./SectionHeader";
 export { StatItem } from "./StatItem";
 export { TestimonialCard } from "./TestimonialCard";
+export { ThemeToggle } from "./ThemeToggle";
 export type { ProductCardProps } from "./ProductCard";
 export type { StatItemProps } from "./StatItem";
 export type { TestimonialCardProps } from "./TestimonialCard";
