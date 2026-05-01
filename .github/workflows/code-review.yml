@@ -1,0 +1,27 @@
+name: Context Engine Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "src/**"
+      - "package.json"
+      - ".github/workflows/**"
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Context Engine Reviewer
+        uses: Context-Engine-AI/Context-Engine-Reviewer@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
