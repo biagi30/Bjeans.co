@@ -24,6 +24,7 @@ The system allows users to checkout both retail and custom items simultaneously.
   - **Lenis**: For smooth, "butter-like" inertial scrolling.
 - **Icons**: **Lucide-React** for sharp, modern minimalism.
 - **Backend**: Fullstack Next.js (App Router) using API Routes for REST APIs.
+- **Backend (Actual Implementation)**: Express.js service in `backend/` for REST APIs.
 - **Database**: **MongoDB (Mongoose)** - Chosen for its flexibility with varied product attributes and body measurement profiles.
 - **Assets**:
   - **Cloudinary**: For optimized, high-res denim imagery.
@@ -49,7 +50,7 @@ Inspired by **Dribbble** and **Awwwards** winners.
 
 ## 4. API Routes Structure (Next.js App Router)
 
-All backend endpoints will live under `src/app/api` using route handlers.
+All backend endpoints currently live under the Express service base URL `http://localhost:5000/api`.
 
 - **Auth & RBAC**
   - `POST /api/auth/register`
@@ -70,6 +71,8 @@ All backend endpoints will live under `src/app/api` using route handlers.
   - `PATCH /api/products/[id]`
   - `GET /api/materials`
   - `POST /api/materials`
+  - `PATCH /api/materials/[id]`
+  - `DELETE /api/materials/[id]`
 - **Custom Builder**
   - `GET /api/custom/options`
   - `POST /api/custom/quote`
@@ -84,6 +87,8 @@ All backend endpoints will live under `src/app/api` using route handlers.
   - `GET /api/orders`
   - `GET /api/orders/[id]`
   - `PATCH /api/orders/[id]`
+  - `GET /api/orders/[id]/splits`
+  - `PATCH /api/orders/[id]/payment`
 
 ### 4.1 Auth & RBAC Middleware
 
@@ -102,10 +107,10 @@ All backend endpoints will live under `src/app/api` using route handlers.
 
 1. **Modul 0: UI/UX & Lokalisasi** - [SELESAI] Implementasi UI modern, mode Gelap/Terang (Tema Klasik Obsidian/Gading), dan terjemahan bahasa Indonesia untuk seluruh halaman (Beranda, Tentang, Toko, Custom).
 2. **Modul 1: Autentikasi & RBAC** - [DALAM PENGERJAAN] Peran Admin, Staf, dan Pelanggan.
-3. **Modul 2: Master Produk & Material** - [TERTUNDA] Manajemen inventaris ritel dan kain custom.
+3. **Modul 2: Master Produk & Material** - [SEBAGIAN SELESAI] Skema + CRUD backend untuk products/materials sudah dibuat.
 4. **Modul 3: Pembuat Custom (Custom Builder)** - [TERTUNDA] Wizard multi-langkah (Kain -> Model -> Detail -> Ukuran).
-5. **Modul 4: Profil Ukuran (Measurement Profile)** - [TERTUNDA] Metrik tubuh yang disimpan pengguna untuk pesanan custom berulang.
-6. **Modul 5: Checkout Terpadu (Unified Checkout)** - [TERTUNDA] Logika untuk menangani keranjang tipe ganda dan pemisahan pesanan.
+5. **Modul 4: Profil Ukuran (Measurement Profile)** - [SEBAGIAN SELESAI] Skema + CRUD backend tersedia.
+6. **Modul 5: Checkout Terpadu (Unified Checkout)** - [SEBAGIAN SELESAI] Endpoint checkout + order splitting backend tersedia.
 7. **Modul 6: Dasbor Admin** - [TERTUNDA] Statistik real-time, pemrosesan pesanan, dan manajemen status.
 
 ---
@@ -114,6 +119,7 @@ All backend endpoints will live under `src/app/api` using route handlers.
 
 - [x] **Database**: MongoDB (Fleksibel/Dokumen).
 - [x] **Arsitektur**: Fullstack Next.js dengan API Routes/App Router.
+- [x] **Backend Service**: Express.js terpisah (hingga API Routes Next.js siap).
 - [x] **Hosting**: Vercel (Frontend + Next.js API).
 - [x] **Lokalisasi**: Bahasa Indonesia.
 - [x] **Tema Visual**: Classy Obsidian & Ivory, Dark Indigo Denim untuk mode gelap.
@@ -123,13 +129,55 @@ All backend endpoints will live under `src/app/api` using route handlers.
 ## 7. Langkah Selanjutnya (Next Steps)
 
 1. **Penyelesaian Modul 1 (Autentikasi & RBAC)**:
-   - Integrasikan sistem autentikasi (NextAuth / implementasi kustom).
-   - Buat middleware untuk melindungi rute berdasarkan peran.
+
+- Integrasikan sistem autentikasi (JWT/NextAuth).
+- Middleware role guard (admin/staff/customer).
+
 2. **Pengembangan Modul 2 (Master Produk)**:
-   - Buat skema database MongoDB untuk produk ritel dan material.
-   - Buat API endpoint untuk CRUD produk.
-3. **Integrasi Frontend - Backend**:
-   - Hubungkan data dummy di halaman Toko dan Custom Tailor dengan API backend yang sebenarnya.
+
+- Integrasi CRUD products/materials ke frontend.
+- Upload gambar ke Cloudinary.
+
+3. **Checkout & Payment Flow**:
+
+- Tambah endpoint pembayaran resmi.
+- Sinkron status order parent-child.
+
+4. **Custom Builder**:
+
+- Konsumsi `custom_options` dan `custom_builder_presets` dari backend.
+
+5. **Monitoring & Validation**:
+
+- Jalankan script schema validation MongoDB (mongosh).
+- Tambah validation Joi untuk endpoint lain.
+
+---
+
+## 8. Progress Log
+
+- **2026-05-11**
+  - Backend Express + MongoDB aktif dan terhubung ke Atlas.
+  - Skema Mongoose lengkap: users, products, materials, orders, carts, custom options, measurement profiles.
+  - CRUD endpoints lengkap untuk users, products, materials, custom options, carts, orders, measurement profiles.
+  - Checkout unified + order splitting dengan status payment dasar.
+  - Joi validation untuk checkout dan payment update.
+  - Seed data awal untuk raw denim, material, custom options, preset builder, dan products.
+  - Index MongoDB untuk koleksi utama.
+  - Script schema validation MongoDB dibuat dan dijalankan via mongosh.
+
+---
+
+## 9. Checklist Operasional
+
+- [ ] Autentikasi JWT/NextAuth dan RBAC middleware.
+- [ ] Validasi Joi untuk seluruh endpoint CRUD.
+- [ ] Endpoint pembayaran resmi (payment intent + webhook).
+- [ ] Sinkronisasi status order parent-child setelah payment.
+- [ ] Integrasi Cloudinary untuk upload gambar.
+- [ ] Integrasi frontend ke API backend (shop, custom builder, cart, checkout).
+- [ ] Admin dashboard (ringkasan order, status, statistik).
+- [ ] Monitoring error dan logging (request + database).
 
 ---
 

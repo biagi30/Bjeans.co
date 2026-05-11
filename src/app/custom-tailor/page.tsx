@@ -1,15 +1,48 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { Container, SectionHeader } from "@/core/components/shared";
-import {
-  fabricOptions,
-  fitOptions,
-  sizeGuideData,
-  landingImages,
-} from "@/core/data/landing.data";
+import { sizeGuideData, landingImages } from "@/core/data/landing.data";
+import type { Material } from "@/api/models";
+import type { CustomOption } from "@/api/models";
+import { getMaterials } from "@/api/services";
+import { getCustomOptionsByType } from "@/api/services";
 
 export default function CustomTailorPage() {
+  const [fabrics, setFabrics] = useState<Material[]>([]);
+  const [fits, setFits] = useState<CustomOption[]>([]);
+  const [loadingFabrics, setLoadingFabrics] = useState(true);
+  const [loadingFits, setLoadingFits] = useState(true);
+
+  useEffect(() => {
+    async function fetchFabrics() {
+      try {
+        const res = await getMaterials();
+        // Filter to only denim-type materials that are active
+        setFabrics(res.data.filter((m) => m.type === "denim" && m.isActive));
+      } catch {
+        // Silently fail — static fallback already in sizeGuideData
+      } finally {
+        setLoadingFabrics(false);
+      }
+    }
+    async function fetchFits() {
+      try {
+        const res = await getCustomOptionsByType("fit");
+        setFits(res.data.filter((o) => o.isActive));
+      } catch {
+        // Silently fail
+      } finally {
+        setLoadingFits(false);
+      }
+    }
+    fetchFabrics();
+    fetchFits();
+  }, []);
+
   return (
     <div className="bg-background text-foreground">
       {/* ─── Hero ──────────────────────────────────────────────── */}
@@ -56,40 +89,63 @@ export default function CustomTailorPage() {
             title="Pilih Jenis Kain"
             description="Pilih dari koleksi kain denim premium kami yang telah dikurasi, masing-masing dengan karakteristik unik."
           />
-          <div className="grid gap-6 md:grid-cols-2">
-            {fabricOptions.map((fabric) => (
-              <div
-                key={fabric.name}
-                className="card-hover glass-card group flex flex-col overflow-hidden rounded-2xl md:flex-row"
-              >
-                <div className="relative h-48 md:h-auto md:w-48 shrink-0 overflow-hidden">
-                  <Image
-                    src={fabric.image}
-                    alt={fabric.name}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-                <div className="flex flex-col justify-center gap-2 p-6">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold">{fabric.name}</h3>
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
-                      {fabric.weight}
-                    </span>
+
+          {loadingFabrics ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span className="ml-3 text-sm text-muted-foreground">Memuat kain...</span>
+            </div>
+          ) : fabrics.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-2">
+              {fabrics.map((fabric) => (
+                <div
+                  key={fabric._id}
+                  className="card-hover glass-card group flex flex-col overflow-hidden rounded-2xl md:flex-row"
+                >
+                  <div className="relative h-48 md:h-auto md:w-48 shrink-0 overflow-hidden">
+                    {fabric.images.length > 0 ? (
+                      <Image
+                        src={fabric.images[0]}
+                        alt={fabric.name}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full min-h-[12rem] items-center justify-center bg-muted">
+                        <span className="text-xs text-muted-foreground">No Image</span>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {fabric.description}
-                  </p>
-                  <button
-                    type="button"
-                    className="mt-2 w-fit rounded-full border border-border px-4 py-1.5 text-xs font-semibold transition-colors hover:bg-muted"
-                  >
-                    Pilih
-                  </button>
+                  <div className="flex flex-col justify-center gap-2 p-6">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold">{fabric.name}</h3>
+                      {fabric.weightOz > 0 && (
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                          {fabric.weightOz}oz
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {fabric.origin && `Asal: ${fabric.origin}`}
+                      {fabric.origin && fabric.color && " • "}
+                      {fabric.color && `Warna: ${fabric.color}`}
+                      {fabric.stretch && ` • Stretch: ${fabric.stretch}`}
+                    </p>
+                    <button
+                      type="button"
+                      className="mt-2 w-fit rounded-full border border-border px-4 py-1.5 text-xs font-semibold transition-colors hover:bg-muted"
+                    >
+                      Pilih
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="py-8 text-center text-muted-foreground">
+              Belum ada data kain tersedia.
+            </p>
+          )}
         </Container>
       </section>
 
@@ -101,40 +157,58 @@ export default function CustomTailorPage() {
             title="Pilih Potongan Anda"
             description="Pilih siluet yang sesuai dengan gaya dan preferensi kenyamanan Anda."
           />
-          <div className="grid gap-6 md:grid-cols-3">
-            {fitOptions.map((fit) => (
-              <div
-                key={fit.name}
-                className="card-hover glass-card group flex flex-col overflow-hidden rounded-2xl"
-              >
-                <div className="relative h-72 overflow-hidden">
-                  <Image
-                    src={fit.image}
-                    alt={fit.name}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                  <div className="absolute bottom-4 left-4">
-                    <h3 className="text-lg font-semibold text-white">
-                      {fit.name}
-                    </h3>
+
+          {loadingFits ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span className="ml-3 text-sm text-muted-foreground">Memuat pilihan potongan...</span>
+            </div>
+          ) : fits.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-3">
+              {fits.map((fit) => (
+                <div
+                  key={fit._id}
+                  className="card-hover glass-card group flex flex-col overflow-hidden rounded-2xl"
+                >
+                  <div className="relative h-72 overflow-hidden">
+                    {fit.image ? (
+                      <Image
+                        src={fit.image}
+                        alt={fit.name}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center bg-muted">
+                        <span className="text-xs text-muted-foreground">No Image</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    <div className="absolute bottom-4 left-4">
+                      <h3 className="text-lg font-semibold text-white">
+                        {fit.name}
+                      </h3>
+                    </div>
+                  </div>
+                  <div className="p-5">
+                    <p className="text-sm text-muted-foreground">
+                      {fit.description}
+                    </p>
+                    <button
+                      type="button"
+                      className="mt-3 w-fit rounded-full border border-border px-4 py-1.5 text-xs font-semibold transition-colors hover:bg-muted"
+                    >
+                      Pilih Potongan
+                    </button>
                   </div>
                 </div>
-                <div className="p-5">
-                  <p className="text-sm text-muted-foreground">
-                    {fit.description}
-                  </p>
-                  <button
-                    type="button"
-                    className="mt-3 w-fit rounded-full border border-border px-4 py-1.5 text-xs font-semibold transition-colors hover:bg-muted"
-                  >
-                    Pilih Potongan
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="py-8 text-center text-muted-foreground">
+              Belum ada data pilihan potongan tersedia.
+            </p>
+          )}
         </Container>
       </section>
 
