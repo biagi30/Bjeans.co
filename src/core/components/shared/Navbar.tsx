@@ -53,20 +53,22 @@ export function Navbar() {
           >
             <Search size={18} />
           </button>
-          <button
-            type="button"
+          
+          <Link
+            href="/profile"
             aria-label="Akun"
             className="hidden h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground sm:flex"
           >
             <User size={18} />
-          </button>
-          <button
-            type="button"
+          </Link>
+
+          <Link
+            href="/cart"
             aria-label="Keranjang"
             className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
           >
             <ShoppingBag size={18} />
-          </button>
+          </Link>
           <ThemeToggle />
 
           {/* Mobile menu toggle */}

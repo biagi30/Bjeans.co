@@ -23,8 +23,7 @@ The system allows users to checkout both retail and custom items simultaneously.
   - **GSAP + ScrollTrigger**: For high-end "Awwwards-style" scroll-driven storytelling.
   - **Lenis**: For smooth, "butter-like" inertial scrolling.
 - **Icons**: **Lucide-React** for sharp, modern minimalism.
-- **Backend**: Fullstack Next.js (App Router) using API Routes for REST APIs.
-- **Backend (Actual Implementation)**: Express.js service in `backend/` for REST APIs.
+- **Backend**: Fullstack Next.js (App Router) using Route Handlers for REST APIs.
 - **Database**: **MongoDB (Mongoose)** - Chosen for its flexibility with varied product attributes and body measurement profiles.
 - **Assets**:
   - **Cloudinary**: For optimized, high-res denim imagery.
@@ -50,7 +49,7 @@ Inspired by **Dribbble** and **Awwwards** winners.
 
 ## 4. API Routes Structure (Next.js App Router)
 
-All backend endpoints currently live under the Express service base URL `http://localhost:5000/api`.
+Target API routes live under `/api` and are being migrated into App Router Route Handlers.
 
 - **Auth & RBAC**
   - `POST /api/auth/register`
@@ -119,7 +118,7 @@ All backend endpoints currently live under the Express service base URL `http://
 
 - [x] **Database**: MongoDB (Fleksibel/Dokumen).
 - [x] **Arsitektur**: Fullstack Next.js dengan API Routes/App Router.
-- [x] **Backend Service**: Express.js terpisah (hingga API Routes Next.js siap).
+- [x] **Backend Service**: Fullstack Next.js API Routes/App Router.
 - [x] **Hosting**: Vercel (Frontend + Next.js API).
 - [x] **Lokalisasi**: Bahasa Indonesia.
 - [x] **Tema Visual**: Classy Obsidian & Ivory, Dark Indigo Denim untuk mode gelap.
@@ -165,13 +164,16 @@ All backend endpoints currently live under the Express service base URL `http://
   - Seed data awal untuk raw denim, material, custom options, preset builder, dan products.
   - Index MongoDB untuk koleksi utama.
   - Script schema validation MongoDB dibuat dan dijalankan via mongosh.
+- **2026-05-21**
+  - Legacy Express backend dihapus.
+  - Migrasi API ke Next.js App Router dimulai.
 
 ---
 
 ## 9. Checklist Operasional
 
 - [ ] Autentikasi JWT/NextAuth dan RBAC middleware.
-- [ ] Validasi Joi untuk seluruh endpoint CRUD.
+- [ ] Validasi Joi untuk seluruh endpoint CRUD (migrasi ke Route Handlers).
 - [ ] Endpoint pembayaran resmi (payment intent + webhook).
 - [ ] Sinkronisasi status order parent-child setelah payment.
 - [ ] Integrasi Cloudinary untuk upload gambar.

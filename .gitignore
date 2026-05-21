@@ -9,6 +9,7 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+figma/
 
 # testing
 /coverage
@@ -43,3 +44,7 @@ next-env.d.ts
 
 # worktrees
 .worktrees/
+
+AGENTS.md
+CLAUDE.md
+PROJECT_PLAN.md

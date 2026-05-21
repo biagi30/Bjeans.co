@@ -11,46 +11,38 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## Overview
 
 - Frontend: Next.js app in repository root.
-- Backend: Express + MongoDB in `backend/`.
-- Database: MongoDB Atlas (connection string stored in `backend/.env`).
+- Backend: Next.js App Router API routes under `src/app/api`.
+- Database: MongoDB Atlas (connection string stored in `.env.local`).
 
 ## Key Paths
 
 - Frontend routes: `src/app/**/page.tsx`
-- Backend entry: `backend/src/server.js`
-- Backend routes index: `backend/src/routes/index.js`
-- Backend models: `backend/src/models/*.js`
-- Backend config: `backend/src/config/database.js`
-- Backend schema validation script: `backend/scripts/mongodb-schema-validation.js`
+- API routes: `src/app/api/**/route.ts`
+- Mongoose connection: `src/backend/config/db.ts`
 
 ## Run Commands (Windows)
 
-- Frontend dev:
+- App dev:
   - `npm run dev`
-- Backend dev:
-  - `npm.cmd run dev --prefix backend`
-- Install backend deps:
-  - `npm.cmd install --prefix backend`
 
-## Backend API Base
+## API Base
 
-- Base URL: `http://localhost:5000/api`
-- Health check: `GET /health`
-- Users: `GET/POST /users`, `GET/PATCH/DELETE /users/:id`
-- Products: `GET/POST /products`, `GET/PATCH/DELETE /products/:id`
-- Orders: `GET/POST /orders`, `GET/PATCH/DELETE /orders/:id`
-- Orders split list: `GET /orders/:id/splits`
-- Orders payment: `PATCH /orders/:id/payment`
-- Measurement Profiles: `GET/POST /measurement-profiles`, `GET/PATCH/DELETE /measurement-profiles/:id`
-- Materials: `GET/POST /materials`, `GET/PATCH/DELETE /materials/:id`
-- Custom Options: `GET/POST /custom-options`, `GET/PATCH/DELETE /custom-options/:id`
-- Carts: `GET/POST /carts`, `GET/PATCH/DELETE /carts/:id`
-- Checkout: `POST /checkout`
+- Base URL: `/api`
+- Health check: `GET /api/health` (to be implemented)
+- Users: `GET/POST /api/users`, `GET/PATCH/DELETE /api/users/:id`
+- Products: `GET/POST /api/products`, `GET/PATCH/DELETE /api/products/:id`
+- Orders: `GET/POST /api/orders`, `GET/PATCH/DELETE /api/orders/:id`
+- Orders split list: `GET /api/orders/:id/splits`
+- Orders payment: `PATCH /api/orders/:id/payment`
+- Measurement Profiles: `GET/POST /api/measurement-profiles`, `GET/PATCH/DELETE /api/measurement-profiles/:id`
+- Materials: `GET/POST /api/materials`, `GET/PATCH/DELETE /api/materials/:id`
+- Custom Options: `GET/POST /api/custom-options`, `GET/PATCH/DELETE /api/custom-options/:id`
+- Carts: `GET/POST /api/carts`, `GET/PATCH/DELETE /api/carts/:id`
+- Checkout: `POST /api/checkout`
 
 ## Environment Files
 
-- Backend env: `backend/.env` (do not commit secrets)
-- Example: `backend/.env.example`
+- App env: `.env.local` (do not commit secrets)
 
 ## MongoDB MCP (VS Code)
 
@@ -66,9 +58,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Notes
 
-- Keep backend running before testing API routes.
-- Confirm MongoDB connection via backend startup logs.
-- Schema validation script requires `mongosh` on the system.
+- Confirm MongoDB connection via app startup logs.
+- Schema validation script requires `mongosh` on the system (pending migration).
 
 ## Progress Log
 
@@ -79,3 +70,6 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - MongoDB indexes and seed data applied.
   - Joi validation for checkout and payment update.
   - Schema validation script created and executed via mongosh.
+- **2026-05-21**
+  - Legacy Express backend removed.
+  - Next.js API migration started.

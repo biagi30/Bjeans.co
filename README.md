@@ -2,10 +2,7 @@
 
 Your Denim, Your Way
 
-This repository contains:
-
-- A Next.js frontend in the project root.
-- An Express + MongoDB backend in the `backend` folder.
+This repository contains a fullstack Next.js app (frontend + API routes) in the project root.
 
 ## Frontend
 
@@ -15,19 +12,8 @@ Run the frontend with:
 npm run dev
 ```
 
-## Backend
-
-The backend uses `mongoose` and reads its connection string from `backend/.env`.
-
-Run the backend with:
-
-```bash
-npm install --prefix backend
-npm run dev:backend
-```
-
 ## MongoDB setup
 
-1. Copy `backend/.env.example` to `backend/.env`.
+1. Create `.env.local` in the project root.
 2. Set `MONGODB_URI` to your local or hosted MongoDB connection string.
-3. Start the backend and confirm `GET /health` returns a success response.
+3. Start the app and use the Next.js API routes under `/api`.
