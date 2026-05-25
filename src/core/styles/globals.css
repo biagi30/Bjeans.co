@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark, .dark *));
+
 :root {
   --background: #fafafa;
   --foreground: #0a0a0b;
@@ -206,3 +208,5 @@
 .green-accent {
   background: linear-gradient(135deg, #10b981, #059669);
 }
+
+

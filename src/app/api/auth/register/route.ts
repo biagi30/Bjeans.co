@@ -40,6 +40,7 @@ export async function POST(request: Request) {
 
     return successResponse({ user: userObj, message: "Registration successful" }, 201);
   } catch (error: any) {
+    console.error("Register Error:", error);
     return errorResponse(error.message, 500);
   }
 }

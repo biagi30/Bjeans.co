@@ -17,10 +17,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     setMounted(true);
-    const isAdminLoggedIn = localStorage.getItem('isAdminLoggedIn') === 'true';
-    if (!isAdminLoggedIn) {
-      router.push('/admin/login');
-    }
+    
   }, [router]);
 
   const neumorph = {
@@ -33,7 +30,7 @@ export default function AdminDashboard() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('isAdminLoggedIn');
+    fetch('/api/auth/logout', { method: 'POST' }); localStorage.removeItem('isAdminLoggedIn');
     localStorage.removeItem('adminEmail');
     router.push('/admin/login');
   };

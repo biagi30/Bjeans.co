@@ -61,11 +61,7 @@ export default function AdminCustomOrders() {
   };
 
   useEffect(() => {
-    const isAdminLoggedIn = localStorage.getItem('isAdminLoggedIn') === 'true';
-    if (!isAdminLoggedIn) {
-      router.push('/admin/login');
-      return;
-    }
+    
     fetchOrders();
   }, [router]);
 
