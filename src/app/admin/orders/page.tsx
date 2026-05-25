@@ -542,7 +542,7 @@ export default function AdminOrders() {
                       </td>
                       <td className="px-6 py-4">
                         <motion.button
-                          onClick={() => setSelectedOrder(order)}
+                          onClick={() => router.push(`/admin/orders/${order._id}`)}
                           style={{ color: colors.accent }}
                           whileHover={{ scale: 1.2, rotate: 5 }}
                           whileTap={{ scale: 0.9 }}

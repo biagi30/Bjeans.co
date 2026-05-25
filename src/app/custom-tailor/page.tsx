@@ -71,8 +71,8 @@ export default function CustomTailorPage() {
           </div>
           <div className="relative h-[360px] overflow-hidden rounded-[24px] border border-border md:h-[460px]">
             <Image
-              src={landingImages.customTailor}
-              alt="Penjahitan denim custom"
+              src="/images/hero.jpg"
+              alt="Penjahitan denim custom bespoke premium"
               fill
               priority
               className="object-cover"
@@ -131,12 +131,12 @@ export default function CustomTailorPage() {
                       {fabric.color && `Warna: ${fabric.color}`}
                       {fabric.stretch && ` • Stretch: ${fabric.stretch}`}
                     </p>
-                    <button
-                      type="button"
-                      className="mt-2 w-fit rounded-full border border-border px-4 py-1.5 text-xs font-semibold transition-colors hover:bg-muted"
+                    <Link
+                      href={`/custom-tailor/fabrics/${fabric._id}`}
+                      className="mt-2 inline-flex w-fit rounded-full border border-border px-4 py-1.5 text-xs font-semibold transition-colors hover:bg-primary hover:text-primary-foreground"
                     >
-                      Pilih
-                    </button>
+                      Pilih & Kustomisasi
+                    </Link>
                   </div>
                 </div>
               ))}
@@ -190,16 +190,16 @@ export default function CustomTailorPage() {
                       </h3>
                     </div>
                   </div>
-                  <div className="p-5">
+                  <div className="p-5 flex flex-col justify-between flex-grow">
                     <p className="text-sm text-muted-foreground">
                       {fit.description}
                     </p>
-                    <button
-                      type="button"
-                      className="mt-3 w-fit rounded-full border border-border px-4 py-1.5 text-xs font-semibold transition-colors hover:bg-muted"
+                    <Link
+                      href="#fabrics"
+                      className="mt-3 inline-flex w-fit rounded-full border border-border px-4 py-1.5 text-xs font-semibold transition-colors hover:bg-primary hover:text-primary-foreground"
                     >
-                      Pilih Potongan
-                    </button>
+                      Pilih Potongan Ini
+                    </Link>
                   </div>
                 </div>
               ))}

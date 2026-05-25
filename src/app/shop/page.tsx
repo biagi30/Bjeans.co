@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Search, ArrowRight, Loader2 } from "lucide-react";
 import { Container } from "@/core/components/shared";
 import { cn } from "@/core/lib/utils";
@@ -18,6 +19,7 @@ function formatIDR(amount: number): string {
 }
 
 export default function ShopPage() {
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,15 +42,26 @@ export default function ShopPage() {
     fetchProducts();
   }, []);
 
-  // Derive categories dynamically from product data
+  // Derive categories dynamically from product data and normalize casing (e.g. "jeans" & "Jeans" -> "Jeans")
   const categories = [
     "Semua",
-    ...Array.from(new Set(products.map((p) => p.category))),
+    ...Array.from(
+      new Set(
+        products.map((p) =>
+          p.category
+            ? p.category.charAt(0).toUpperCase() + p.category.slice(1).toLowerCase()
+            : ""
+        )
+      )
+    ).filter(Boolean),
   ];
 
   const filteredProducts = products.filter((product) => {
+    const normCategory = product.category
+      ? product.category.charAt(0).toUpperCase() + product.category.slice(1).toLowerCase()
+      : "";
     const matchesCategory =
-      activeCategory === "Semua" || product.category === activeCategory;
+      activeCategory === "Semua" || normCategory === activeCategory;
     const matchesSearch = product.name
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
@@ -133,7 +146,11 @@ export default function ShopPage() {
               {filteredProducts.map((product) => (
                 <div
                   key={product._id}
-                  className="card-hover glass-card group flex flex-col overflow-hidden rounded-2xl"
+                  className="card-hover glass-card group flex flex-col overflow-hidden rounded-2xl cursor-pointer"
+                  onClick={() => router.push(`/shop/${product._id}`)}
+                  tabIndex={0}
+                  role="button"
+                  onKeyDown={e => { if (e.key === 'Enter') router.push(`/shop/${product._id}`); }}
                 >
                   <div className="relative h-72 overflow-hidden">
                     {product.images.length > 0 ? (
