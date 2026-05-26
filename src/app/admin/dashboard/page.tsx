@@ -20,11 +20,11 @@ export default function AdminDashboard() {
     setMounted(true);
   }, [router]);
 
-  const handleKeluar = () => {
-    fetch('/api/auth/Keluar', { method: 'POST' }); 
+  const handleLogout = () => {
+    fetch('/api/auth/logout', { method: 'POST' }); 
     localStorage.removeItem('isAdminLoggedIn');
     localStorage.removeItem('adminEmail');
-    router.push('/admin/login');
+    router.push('/login');
   };
 
   // Mock data for dashboard
@@ -80,7 +80,7 @@ export default function AdminDashboard() {
         </div>
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          <button onClick={handleKeluar} className="flex items-center gap-2 text-sm font-semibold" style={{ color: colors.textMuted }}>
+          <button onClick={handleLogout} className="flex items-center gap-2 text-sm font-semibold" style={{ color: colors.textMuted }}>
             <LogOut size={16} /> Keluar
           </button>
         </div>
@@ -228,6 +228,7 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
 
 
 
