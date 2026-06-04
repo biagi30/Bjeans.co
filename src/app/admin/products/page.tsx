@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface Product {
   _id: string;
   name: string;
+  sku: string;
   price: number;
   stock: number;
   category: string;
@@ -26,12 +27,16 @@ export default function AdminProducts() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
+    sku: '',
     price: '',
     stock: '',
     category: '',
     description: '',
+    images: '',
   });
 
   const neumorph = {
@@ -71,16 +76,87 @@ export default function AdminProducts() {
     }
   };
 
+  const parseImages = (value: string) =>
+    value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+  const parsePrice = (value: string) => {
+    const digits = value.replace(/[^0-9]/g, "");
+    return digits ? Number(digits) : NaN;
+  };
+
+  const handleImageUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    setUploadError(null);
+
+    try {
+      const uploads = Array.from(files);
+      const uploadedUrls: string[] = [];
+
+      for (const file of uploads) {
+        const form = new FormData();
+        form.append('file', file);
+
+        const res = await fetch('/api/uploads', {
+          method: 'POST',
+          body: form,
+        });
+
+        const data = await res.json();
+        if (!data.success || !data.data?.url) {
+          throw new Error(data.message || 'Upload failed');
+        }
+
+        uploadedUrls.push(data.data.url as string);
+      }
+
+      setFormData((prev) => {
+        const merged = [...parseImages(prev.images), ...uploadedUrls];
+        return { ...prev, images: merged.join(', ') };
+      });
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = (url: string) => {
+    setFormData((prev) => {
+      const filtered = parseImages(prev.images).filter((img) => img !== url);
+      return { ...prev, images: filtered.join(', ') };
+    });
+  };
+
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (uploading) {
+      alert('Please wait for image upload to finish.');
+      return;
+    }
+    const images = parseImages(formData.images);
+    const priceValue = parsePrice(formData.price);
+    if (Number.isNaN(priceValue)) {
+      alert('Please enter a valid price.');
+      return;
+    }
+    if (images.length === 0) {
+      alert('Please upload at least one product image.');
+      return;
+    }
     try {
       const newProduct = {
         name: formData.name,
-        price: parseFloat(formData.price),
+        sku: formData.sku,
+        price: priceValue,
         stock: parseInt(formData.stock),
         category: formData.category,
         description: formData.description || 'No description',
-        images: ["/images/default-jeans.jpg"], // Default mock image
+        images,
       };
 
       const res = await fetch('/api/products', {
@@ -93,7 +169,7 @@ export default function AdminProducts() {
       if (data.success) {
         setProducts([data.data, ...products]);
         setShowAddModal(false);
-        setFormData({ name: '', price: '', stock: '', category: '', description: '' });
+        setFormData({ name: '', sku: '', price: '', stock: '', category: '', description: '', images: '' });
         alert('Product added successfully!');
       } else {
         alert(data.message || 'Failed to add product');
@@ -106,13 +182,25 @@ export default function AdminProducts() {
   const handleEditProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingProduct) {
+      if (uploading) {
+        alert('Please wait for image upload to finish.');
+        return;
+      }
       try {
+        const images = parseImages(formData.images);
+        const priceValue = parsePrice(formData.price);
+        if (Number.isNaN(priceValue)) {
+          alert('Please enter a valid price.');
+          return;
+        }
         const updatedProduct = {
           name: formData.name,
-          price: parseFloat(formData.price),
+          sku: formData.sku,
+          price: priceValue,
           stock: parseInt(formData.stock),
           category: formData.category,
           description: formData.description,
+          images,
         };
 
         const res = await fetch(`/api/products/${editingProduct._id}`, {
@@ -127,7 +215,7 @@ export default function AdminProducts() {
             p._id === editingProduct._id ? data.data : p
           ));
           setEditingProduct(null);
-          setFormData({ name: '', price: '', stock: '', category: '', description: '' });
+          setFormData({ name: '', sku: '', price: '', stock: '', category: '', description: '', images: '' });
           alert('Product updated successfully!');
         } else {
           alert(data.message || 'Failed to update product');
@@ -161,10 +249,12 @@ export default function AdminProducts() {
     setEditingProduct(product);
     setFormData({
       name: product.name,
+      sku: product.sku,
       price: product.price.toString(),
       stock: product.stock.toString(),
       category: product.category,
       description: product.description || '',
+      images: product.images && product.images.length > 0 ? product.images.join(', ') : '',
     });
   };
 
@@ -210,7 +300,7 @@ export default function AdminProducts() {
               <motion.button
                 onClick={() => {
                   setEditingProduct(null);
-                  setFormData({ name: '', price: '', stock: '', category: '', description: '' });
+                  setFormData({ name: '', sku: '', price: '', stock: '', category: '', description: '', images: '' });
                   setShowAddModal(true);
                 }}
                 className="flex items-center gap-2 px-6 py-3 rounded-xl"
@@ -425,7 +515,7 @@ export default function AdminProducts() {
             transition={{ duration: 0.3 }}
           >
             <motion.div
-              className="max-w-md w-full mx-auto p-8 rounded-2xl overflow-y-auto max-h-[90vh]"
+              className="max-w-2xl w-full mx-auto p-6 rounded-2xl"
               style={{
                 backgroundColor: colors.bgSecondary,
                 ...neumorph
@@ -451,7 +541,7 @@ export default function AdminProducts() {
               </motion.h3>
 
             <form onSubmit={editingProduct ? handleEditProduct : handleAddProduct}>
-              <div className="space-y-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -485,6 +575,42 @@ export default function AdminProducts() {
                       ...neumorphInset
                     }}
                     placeholder="Enter product name"
+                  />
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, delay: 0.25 }}
+                >
+                  <label
+                    className="block mb-2"
+                    style={{
+                      fontFamily: 'var(--font-space), sans-serif',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      letterSpacing: '0.5px',
+                      color: colors.text
+                    }}
+                  >
+                    SKU *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.sku}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl outline-none transition-all duration-300"
+                    style={{
+                      fontFamily: 'var(--font-space), sans-serif',
+                      fontWeight: 500,
+                      fontSize: '14px',
+                      backgroundColor: colors.bg,
+                      color: colors.text,
+                      border: `2px solid ${colors.border}`,
+                      ...neumorphInset
+                    }}
+                    placeholder="Enter SKU"
                   />
                 </motion.div>
 
@@ -546,9 +672,9 @@ export default function AdminProducts() {
                     PRICE (Rp) *
                   </label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     required
-                    step="1000"
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     className="w-full px-4 py-3 rounded-xl outline-none transition-all duration-300"
@@ -605,6 +731,7 @@ export default function AdminProducts() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.4, delay: 0.6 }}
+                  className="md:col-span-2"
                 >
                   <label
                     className="block mb-2"
@@ -633,6 +760,70 @@ export default function AdminProducts() {
                     }}
                     placeholder="Enter description"
                   />
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, delay: 0.65 }}
+                  className="md:col-span-2"
+                >
+                  <label
+                    className="block mb-2"
+                    style={{
+                      fontFamily: 'var(--font-space), sans-serif',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      letterSpacing: '0.5px',
+                      color: colors.text
+                    }}
+                  >
+                    UPLOAD PRODUCT IMAGES
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => handleImageUpload(e.target.files)}
+                    className="w-full px-4 py-3 rounded-xl outline-none transition-all duration-300"
+                    style={{
+                      fontFamily: 'var(--font-space), sans-serif',
+                      fontWeight: 500,
+                      fontSize: '14px',
+                      backgroundColor: colors.bg,
+                      color: colors.text,
+                      border: `2px solid ${colors.border}`,
+                      ...neumorphInset
+                    }}
+                  />
+                  {uploading && (
+                    <p className="mt-2 text-xs" style={{ color: colors.textSecondary }}>
+                      Uploading images...
+                    </p>
+                  )}
+                  {uploadError && (
+                    <p className="mt-2 text-xs" style={{ color: '#EF4444' }}>
+                      {uploadError}
+                    </p>
+                  )}
+                  {parseImages(formData.images).length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {parseImages(formData.images).map((img) => (
+                        <div key={img} className="relative h-16 w-16 overflow-hidden rounded border" style={{ borderColor: colors.border }}>
+                          <img src={img} alt="Preview" className="h-full w-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(img)}
+                            className="absolute right-1 top-1 h-5 w-5 rounded-full text-xs"
+                            style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: '#FFFFFF' }}
+                            aria-label="Remove image"
+                          >
+                            x
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </motion.div>
               </div>
 
