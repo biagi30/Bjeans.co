@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { Button } from "@/core/components/shared/Button";
@@ -12,7 +12,6 @@ export default function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -38,7 +37,9 @@ export default function LoginForm() {
 
       if (res.ok) {
         const userRole = data.data?.user?.role;
-        const redirect = searchParams.get("redirect");
+        // Read redirect param directly from browser URL instead of useSearchParams
+        const params = new URLSearchParams(window.location.search);
+        const redirect = params.get("redirect");
         
         if (userRole === "admin") {
           router.push(redirect || "/admin/dashboard");
