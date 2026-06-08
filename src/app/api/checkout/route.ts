@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { connectDatabase } from "@/backend/config/db";
-import { Cart, Order } from "@/backend/models";
+import { Cart, Order, MeasurementProfile } from "@/backend/models";
 import { validateBody, checkoutSchema } from "@/backend/utils/validate";
 import { successResponse, errorResponse } from "@/backend/utils/apiResponse";
 
@@ -107,6 +107,28 @@ export async function POST(request: Request) {
           totalAmount: customTotal,
         })
       );
+
+      // Auto-save/update measurement profile for the user
+      try {
+        const firstCustom = customItems[0];
+        if (firstCustom && firstCustom.customSpec && firstCustom.customSpec.sizing) {
+          const sizing = firstCustom.customSpec.sizing;
+          const notes = firstCustom.customSpec.notes || "";
+          
+          await MeasurementProfile.findOneAndUpdate(
+            { user: cart.user._id },
+            {
+              waist: sizing.waist || 0,
+              thigh: sizing.hip || 0, // thigh disimpan sebagai hip
+              inseam: sizing.inseam || 0,
+              notes: notes,
+            },
+            { upsert: true, new: true }
+          );
+        }
+      } catch (err) {
+        console.error("Gagal menyimpan profil ukuran otomatis pada checkout:", err);
+      }
     }
 
     // 4. LOGIKA PEMBERSIHAN KERANJANG BARU:

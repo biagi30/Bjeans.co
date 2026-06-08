@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Trash2, ShoppingBag, ArrowRight, Sparkles, Ruler, Plus, Minus } from "lucide-react";
 import { Container } from "@/core/components/shared";
+import { useToast } from "@/core/context/ToastContext";
 
 interface CartItem {
   id: string;
@@ -41,49 +42,84 @@ function formatIDR(amount: number): string {
 
 export default function CartPage() {
   const router = useRouter();
+  const toast = useToast();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [cartKey, setCartKey] = useState<string>("bjeans_cart_guest");
   const [mounted, setMounted] = useState(false);
+  const [products, setProducts] = useState<any[]>([]);
 
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem("bjeans_cart");
-    if (stored) {
+
+    const initCart = async () => {
+      // Determine per-user cart key
+      let key = "bjeans_cart_guest";
       try {
-        const parsedItems = JSON.parse(stored);
-        setCartItems(parsedItems);
-        setSelectedIds(parsedItems.map((item: CartItem) => item.id || item._id));
-      } catch (e) {
-        console.error("Failed to parse cart", e);
-      }
-    } else {
-      const defaultItems: CartItem[] = [
-        {
-          id: "retail-mock-1",
-          name: "Classic Blue Jeans (Retail Edition)",
-          price: 749000,
-          quantity: 1,
-          type: "retail",
-          image: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=400&q=80"
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          const userId = data.data?.user?._id;
+          if (userId) {
+            key = `bjeans_cart_${userId}`;
+          }
         }
-      ];
-      localStorage.setItem("bjeans_cart", JSON.stringify(defaultItems));
-      setCartItems(defaultItems);
-      setSelectedIds(defaultItems.map(item => item.id || item._id).filter(Boolean) as string[]);
-    }
+      } catch {
+        // Guest mode
+      }
+      setCartKey(key);
+
+      // Load products list to get live stock
+      try {
+        const prodRes = await fetch("/api/products");
+        if (prodRes.ok) {
+          const prodData = await prodRes.json();
+          if (prodData.success) {
+            setProducts(prodData.data);
+          }
+        }
+      } catch (err) {
+        console.error("Gagal memuat daftar produk untuk validasi stok:", err);
+      }
+
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        try {
+          const parsedItems = JSON.parse(stored);
+          setCartItems(parsedItems);
+          setSelectedIds(parsedItems.map((item: CartItem) => item.id || item._id));
+        } catch (e) {
+          console.error("Failed to parse cart", e);
+        }
+      }
+    };
+
+    initCart();
   }, []);
 
   const updateQuantity = (id: string, delta: number) => {
     const updatedItems = cartItems.map((item) => {
       const itemId = item.id || item._id;
       if (itemId === id) {
-        const newQuantity = Math.max(1, item.quantity + delta);
+        let maxStock = 999;
+        if (item.type === "retail") {
+          const parts = id.split("-");
+          if (parts.length > 1) {
+            const productId = parts[1];
+            const foundProduct = products.find((p) => p._id === productId);
+            if (foundProduct) {
+              maxStock = foundProduct.stock;
+            }
+          }
+        }
+        // Limit quantity to [1, maxStock]
+        const newQuantity = Math.min(maxStock, Math.max(1, item.quantity + delta));
         return { ...item, quantity: newQuantity };
       }
       return item;
     });
     setCartItems(updatedItems);
-    localStorage.setItem("bjeans_cart", JSON.stringify(updatedItems));
+    localStorage.setItem(cartKey, JSON.stringify(updatedItems));
   };
 
   const toggleSelection = (id: string) => {
@@ -104,13 +140,13 @@ export default function CartPage() {
     const updated = cartItems.filter((item) => (item.id || item._id) !== itemId);
     setCartItems(updated);
     setSelectedIds((prev) => prev.filter((id) => id !== itemId));
-    localStorage.setItem("bjeans_cart", JSON.stringify(updated));
+    localStorage.setItem(cartKey, JSON.stringify(updated));
   };
 
   const handleClearCart = () => {
     setCartItems([]);
     setSelectedIds([]);
-    localStorage.setItem("bjeans_cart", JSON.stringify([]));
+    localStorage.setItem(cartKey, JSON.stringify([]));
   };
 
   const total = cartItems
@@ -161,6 +197,20 @@ export default function CartPage() {
               {cartItems.map((item) => {
                 const itemId = (item.id || item._id) as string;
                 const isSelected = selectedIds.includes(itemId);
+                
+                // Get max stock for this specific item
+                let maxStock = 999;
+                if (item.type === "retail") {
+                  const parts = itemId.split("-");
+                  if (parts.length > 1) {
+                    const productId = parts[1];
+                    const foundProduct = products.find((p) => p._id === productId);
+                    if (foundProduct) {
+                      maxStock = foundProduct.stock;
+                    }
+                  }
+                }
+
                 return (
                   <div
                     key={itemId}
@@ -226,21 +276,29 @@ export default function CartPage() {
                       )}
 
                       <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
-                        <div className="flex items-center gap-1 bg-surface-elevated border border-border/60 rounded-lg p-1">
-                          <button
-                            onClick={() => updateQuantity(itemId, -1)}
-                            disabled={item.quantity <= 1}
-                            className="p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors rounded-md hover:bg-muted"
-                          >
-                            <Minus size={14} />
-                          </button>
-                          <span className="w-8 text-center text-sm font-semibold">{item.quantity}</span>
-                          <button
-                            onClick={() => updateQuantity(itemId, 1)}
-                            className="p-1.5 text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted"
-                          >
-                            <Plus size={14} />
-                          </button>
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-1 bg-surface-elevated border border-border/60 rounded-lg p-1 w-fit">
+                            <button
+                              onClick={() => updateQuantity(itemId, -1)}
+                              disabled={item.quantity <= 1}
+                              className="p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors rounded-md hover:bg-muted"
+                            >
+                              <Minus size={14} />
+                            </button>
+                            <span className="w-8 text-center text-sm font-semibold">{item.quantity}</span>
+                            <button
+                              onClick={() => updateQuantity(itemId, 1)}
+                              disabled={item.quantity >= maxStock}
+                              className="p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors rounded-md hover:bg-muted"
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </div>
+                          {item.type === "retail" && maxStock <= item.quantity && (
+                            <span className="text-[10px] text-rose-500 font-semibold">
+                              Batas stok maksimum tercapai ({maxStock} unit)
+                            </span>
+                          )}
                         </div>
                         <div className="text-right">
                           <span className="text-[11px] text-muted-foreground block mb-0.5">Subtotal Item</span>
@@ -283,7 +341,7 @@ export default function CartPage() {
                     });
 
                     if (itemsToCheckout.length === 0) {
-                      alert("Gagal memproses produk. Pastikan produk sudah dicentang.");
+                      toast.error("Gagal memproses produk. Pastikan produk sudah dicentang.");
                       return;
                     }
 

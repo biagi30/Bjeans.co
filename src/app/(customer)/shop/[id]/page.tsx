@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Loader2, ArrowLeft, Check, ShoppingBag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "@/core/context/ToastContext";
 
 interface Product {
   _id: string;
@@ -20,6 +21,7 @@ interface Product {
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const toast = useToast();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +29,25 @@ export default function ProductDetailPage() {
   // Cart States
   const [isAdding, setIsAdding] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [cartKey, setCartKey] = useState<string>("bjeans_cart_guest");
+
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          const userId = data.data?.user?._id;
+          if (userId) {
+            setCartKey(`bjeans_cart_${userId}`);
+          }
+        }
+      } catch (err) {
+        // Keep as guest
+      }
+    }
+    fetchUser();
+  }, []);
 
   useEffect(() => {
     async function fetchProduct() {
@@ -34,7 +55,7 @@ export default function ProductDetailPage() {
         setLoading(true);
         const res = await fetch(`/api/products/${id}`);
         const data = await res.json();
-        if (data.success) {
+        if (res.ok && data.success) {
           setProduct(data.data);
           setError(null);
         } else {
@@ -64,13 +85,26 @@ export default function ProductDetailPage() {
     };
 
     setTimeout(() => {
-      const stored = localStorage.getItem("bjeans_cart");
+      const stored = localStorage.getItem(cartKey);
       let cart = stored ? JSON.parse(stored) : [];
       if (!Array.isArray(cart)) cart = [];
 
-      cart.push(cartItem);
-      localStorage.setItem("bjeans_cart", JSON.stringify(cart));
+      const existingIndex = cart.findIndex((item: any) => 
+        item.type === "retail" && item.id.split("-")[1] === product._id
+      );
 
+      if (existingIndex > -1) {
+        if (cart[existingIndex].quantity >= product.stock) {
+          toast.error(`Anda tidak dapat menambahkan lebih dari ${product.stock} unit ke dalam keranjang (batas stok maksimum).`);
+          setIsAdding(false);
+          return;
+        }
+        cart[existingIndex].quantity = cart[existingIndex].quantity + 1;
+      } else {
+        cart.push(cartItem);
+      }
+
+      localStorage.setItem(cartKey, JSON.stringify(cart));
       setIsAdding(false);
       setAddedToCart(true);
     }, 600);

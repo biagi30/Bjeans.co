@@ -60,7 +60,7 @@ export default function Home() {
               <Scissors size={12} />
               Rumah Denim Premium
             </p>
-            <h1 className="text-balance font-[var(--font-display)] text-4xl font-semibold leading-tight tracking-tight md:text-6xl lg:text-7xl">
+            <h1 className="text-balance font-[var(--font-display)] text-3xl font-semibold leading-tight tracking-tight md:text-5xl lg:text-6xl">
               Koleksi Raw Denim Premium
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
@@ -208,7 +208,7 @@ export default function Home() {
             <p className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1 text-xs uppercase tracking-[0.3em] text-primary">
               Layanan Penjahitan Bespoke
             </p>
-            <h2 className="text-balance font-[var(--font-display)] text-3xl font-semibold leading-tight md:text-5xl">
+            <h2 className="text-balance font-[var(--font-display)] text-2xl font-semibold leading-tight md:text-4xl">
               Denim Custom Dibuat Untuk Anda
             </h2>
             <p className="max-w-lg text-muted-foreground">

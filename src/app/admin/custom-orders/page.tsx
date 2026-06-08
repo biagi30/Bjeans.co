@@ -7,34 +7,44 @@ import { useTheme } from 'next-themes';
 import { getThemeColors } from '../theme';
 import { ThemeToggle } from '@/core/components/shared/ThemeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '@/core/context/ToastContext';
 
 interface OrderItem {
-  product: {
+  itemType: 'retail' | 'custom';
+  product?: {
     _id: string;
     name: string;
     price: number;
-  };
+  } | null;
+  name: string;
   quantity: number;
-  price: number;
+  unitPrice: number;
+  totalPrice: number;
+  customSpec?: any;
   customDetails?: any;
 }
 
 interface Order {
   _id: string;
-  user?: {
+  orderNumber?: string;
+  customer?: {
+    _id: string;
     name: string;
     email: string;
   };
   items: OrderItem[];
   totalAmount: number;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'waiting_payment' | 'processing' | 'done' | 'shipped';
+  paymentStatus?: 'unpaid' | 'paid' | 'refunded';
   createdAt: string;
   shippingAddress?: string;
   type?: 'retail' | 'custom';
+  orderType?: 'unified' | 'retail' | 'custom';
 }
 
 export default function AdminCustomOrders() {
   const router = useRouter();
+  const toast = useToast();
   const { theme } = useTheme();
   const colors = getThemeColors(theme);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -83,25 +93,27 @@ export default function AdminCustomOrders() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending':
+      case 'waiting_payment':
         return '#F59E0B';
       case 'processing':
         return '#3B82F6';
       case 'shipped':
         return '#8B5CF6';
-      case 'delivered':
+      case 'done':
         return '#10B981';
-      case 'cancelled':
-        return '#EF4444';
       default:
         return '#64748B';
     }
   };
 
   const getStatusLabel = (status: string) => {
-    if (status === 'processing') return 'IN PRODUCTION';
-    if (status === 'shipped') return 'READY/SHIPPED';
-    return status ? status.toUpperCase() : 'UNKNOWN';
+    switch (status) {
+      case 'waiting_payment': return 'WAITING PAYMENT';
+      case 'processing': return 'IN PRODUCTION';
+      case 'shipped': return 'READY/SHIPPED';
+      case 'done': return 'COMPLETED';
+      default: return status ? status.toUpperCase() : 'UNKNOWN';
+    }
   };
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
@@ -116,13 +128,13 @@ export default function AdminCustomOrders() {
         setOrders(orders.map(order =>
           order._id === orderId ? { ...order, status: newStatus as any } : order
         ));
-        alert(`Custom order status updated to ${getStatusLabel(newStatus)}`);
+        toast.success(`Custom order status updated to ${getStatusLabel(newStatus)}`);
         setSelectedOrder(null);
       } else {
-        alert(data.message || 'Failed to update order');
+        toast.error(data.message || 'Failed to update order');
       }
     } catch (err) {
-      alert('Network error');
+      toast.error('Network error');
     }
   };
 
@@ -155,7 +167,7 @@ export default function AdminCustomOrders() {
                 <motion.h1
                   className="text-3xl tracking-tight uppercase"
                   style={{
-                    fontFamily: 'var(--font-playfair), serif',
+                    fontFamily: 'var(--font-outfit), sans-serif',
                     color: colors.text
                   }}
                   initial={{ opacity: 0, x: -20 }}
@@ -188,11 +200,10 @@ export default function AdminCustomOrders() {
                 whileHover={{ scale: 1.02 }}
               >
                 <option value="all" style={{ backgroundColor: colors.bgSecondary }}>ALL ORDERS</option>
-                <option value="pending" style={{ backgroundColor: colors.bgSecondary }}>PENDING</option>
+                <option value="waiting_payment" style={{ backgroundColor: colors.bgSecondary }}>WAITING PAYMENT</option>
                 <option value="processing" style={{ backgroundColor: colors.bgSecondary }}>IN PRODUCTION</option>
                 <option value="shipped" style={{ backgroundColor: colors.bgSecondary }}>READY</option>
-                <option value="delivered" style={{ backgroundColor: colors.bgSecondary }}>COMPLETED</option>
-                <option value="cancelled" style={{ backgroundColor: colors.bgSecondary }}>CANCELLED</option>
+                <option value="done" style={{ backgroundColor: colors.bgSecondary }}>COMPLETED</option>
               </motion.select>
             </div>
           </div>
@@ -229,7 +240,7 @@ export default function AdminCustomOrders() {
               </p>
               <p
                 style={{
-                  fontFamily: 'var(--font-playfair), serif',
+                  fontFamily: 'var(--font-outfit), sans-serif',
                   fontSize: '32px',
                   color: colors.text
                 }}
@@ -259,16 +270,16 @@ export default function AdminCustomOrders() {
                   color: colors.textSecondary
                 }}
               >
-                PENDING
+                WAITING PAYMENT
               </p>
               <p
                 style={{
-                  fontFamily: 'var(--font-playfair), serif',
+                  fontFamily: 'var(--font-outfit), sans-serif',
                   fontSize: '32px',
                   color: '#F59E0B'
                 }}
               >
-                {orders.filter(o => o.status === 'pending').length}
+                {orders.filter(o => o.status === 'waiting_payment').length}
               </p>
             </motion.div>
 
@@ -297,7 +308,7 @@ export default function AdminCustomOrders() {
               </p>
               <p
                 style={{
-                  fontFamily: 'var(--font-playfair), serif',
+                  fontFamily: 'var(--font-outfit), sans-serif',
                   fontSize: '32px',
                   color: colors.accent
                 }}
@@ -331,7 +342,7 @@ export default function AdminCustomOrders() {
               </p>
               <p
                 style={{
-                  fontFamily: 'var(--font-playfair), serif',
+                  fontFamily: 'var(--font-outfit), sans-serif',
                   fontSize: '32px',
                   color: '#8B5CF6'
                 }}
@@ -459,7 +470,7 @@ export default function AdminCustomOrders() {
                           color: colors.text
                         }}
                       >
-                        #{order._id.substring(order._id.length - 6).toUpperCase()}
+                        {order.orderNumber || `#${order._id.substring(order._id.length - 6).toUpperCase()}`}
                       </td>
                       <td className="px-6 py-4">
                         <div>
@@ -471,7 +482,7 @@ export default function AdminCustomOrders() {
                               color: colors.text
                             }}
                           >
-                            {order.user?.name || "Guest User"}
+                            {order.customer?.name || "Guest User"}
                           </p>
                           <p
                             style={{
@@ -481,7 +492,7 @@ export default function AdminCustomOrders() {
                               color: colors.textSecondary
                             }}
                           >
-                            {order.user?.email || "No email"}
+                            {order.customer?.email || "No email"}
                           </p>
                         </div>
                       </td>
@@ -566,7 +577,7 @@ export default function AdminCustomOrders() {
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
                 <motion.h3
                   style={{
-                    fontFamily: 'var(--font-playfair), serif',
+                    fontFamily: 'var(--font-outfit), sans-serif',
                     fontSize: '24px',
                     color: colors.text
                   }}
@@ -622,7 +633,7 @@ export default function AdminCustomOrders() {
                       color: colors.text
                     }}
                   >
-                    {selectedOrder.user?.name || "Guest User"}
+                    {selectedOrder.customer?.name || "Guest User"}
                   </p>
                   <p
                     style={{
@@ -632,7 +643,7 @@ export default function AdminCustomOrders() {
                       color: colors.textSecondary
                     }}
                   >
-                    {selectedOrder.user?.email || "No email"}
+                    {selectedOrder.customer?.email || "No email"}
                   </p>
                 </motion.div>
 
@@ -684,7 +695,7 @@ export default function AdminCustomOrders() {
                   </p>
                   <p
                     style={{
-                      fontFamily: 'var(--font-playfair), serif',
+                      fontFamily: 'var(--font-outfit), sans-serif',
                       fontSize: '28px',
                       color: colors.text
                     }}
@@ -744,7 +755,7 @@ export default function AdminCustomOrders() {
                       READY
                     </motion.button>
                     <motion.button
-                      onClick={() => handleStatusChange(selectedOrder._id, 'delivered')}
+                      onClick={() => handleStatusChange(selectedOrder._id, 'done')}
                       className="px-4 py-3 rounded-xl"
                       style={{
                         fontFamily: 'var(--font-space), sans-serif',
@@ -758,22 +769,6 @@ export default function AdminCustomOrders() {
                       whileTap={{ scale: 0.98 }}
                     >
                       COMPLETED
-                    </motion.button>
-                    <motion.button
-                      onClick={() => handleStatusChange(selectedOrder._id, 'cancelled')}
-                      className="px-4 py-3 rounded-xl"
-                      style={{
-                        fontFamily: 'var(--font-space), sans-serif',
-                        fontWeight: 700,
-                        fontSize: '13px',
-                        backgroundColor: `${colors.error}20`,
-                        color: colors.error,
-                        border: `2px solid ${colors.error}`
-                      }}
-                      whileHover={{ scale: 1.02, y: -2 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      CANCEL
                     </motion.button>
                   </div>
                 </motion.div>
@@ -801,9 +796,48 @@ export default function AdminCustomOrders() {
                   
                   {selectedOrder.items?.map((item, index) => (
                     <div key={index} className="p-4 mb-4 rounded-xl" style={{ backgroundColor: colors.bg, border: `1px solid ${colors.border}` }}>
-                      <p className="font-semibold mb-2">{item.product?.name || "Custom Item"}</p>
+                      <p className="font-semibold mb-2">{item.product?.name || item.name || "Custom Item"}</p>
                       
-                      {item.customDetails ? (
+                      {item.customSpec ? (
+                         <div className="space-y-2">
+                           <div className="flex justify-between border-b border-border/50 pb-1">
+                             <span className="text-sm text-muted-foreground font-semibold">Kain (Fabric)</span>
+                             <span className="text-sm font-medium">{item.customSpec.fabricName || "-"} ({item.customSpec.fabricWeight || ""})</span>
+                           </div>
+                           <div className="flex justify-between border-b border-border/50 pb-1">
+                             <span className="text-sm text-muted-foreground font-semibold">Potongan (Fit)</span>
+                             <span className="text-sm font-medium">{item.customSpec.fitName || "-"}</span>
+                           </div>
+                           {item.customSpec.sizing && (
+                             <>
+                               {item.customSpec.sizing.waist !== undefined && (
+                                 <div className="flex justify-between border-b border-border/50 pb-1">
+                                   <span className="text-sm text-muted-foreground">Pinggang (Waist)</span>
+                                   <span className="text-sm font-medium">{item.customSpec.sizing.waist}"</span>
+                                 </div>
+                               )}
+                               {item.customSpec.sizing.hip !== undefined && (
+                                 <div className="flex justify-between border-b border-border/50 pb-1">
+                                   <span className="text-sm text-muted-foreground">Pinggul (Hip)</span>
+                                   <span className="text-sm font-medium">{item.customSpec.sizing.hip}"</span>
+                                 </div>
+                               )}
+                               {item.customSpec.sizing.inseam !== undefined && (
+                                 <div className="flex justify-between border-b border-border/50 pb-1">
+                                   <span className="text-sm text-muted-foreground">Inseam</span>
+                                   <span className="text-sm font-medium">{item.customSpec.sizing.inseam}"</span>
+                                 </div>
+                               )}
+                             </>
+                           )}
+                           {(item.customSpec.notes || item.customSpec.sizing?.notes) && (
+                             <div className="flex justify-between border-b border-border/50 pb-1">
+                               <span className="text-sm text-muted-foreground">Catatan</span>
+                               <span className="text-sm font-medium">{item.customSpec.notes || item.customSpec.sizing?.notes}</span>
+                             </div>
+                           )}
+                         </div>
+                      ) : item.customDetails ? (
                          <div className="space-y-2">
                            {Object.entries(item.customDetails).map(([key, value]) => (
                              <div key={key} className="flex justify-between border-b border-border/50 pb-1">
@@ -813,7 +847,7 @@ export default function AdminCustomOrders() {
                            ))}
                          </div>
                       ) : (
-                        <p className="text-sm text-muted-foreground">No specific custom details recorded in DB.</p>
+                         <p className="text-sm text-muted-foreground">No specific custom details recorded in DB.</p>
                       )}
                     </div>
                   ))}

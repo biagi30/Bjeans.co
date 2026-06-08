@@ -7,6 +7,7 @@ import { useTheme } from 'next-themes';
 import { getThemeColors } from '../theme';
 import { ThemeToggle } from '@/core/components/shared/ThemeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '@/core/context/ToastContext';
 
 interface Product {
   _id: string;
@@ -21,6 +22,7 @@ interface Product {
 
 export default function AdminProducts() {
   const router = useRouter();
+  const toast = useToast();
   const { theme } = useTheme();
   const colors = getThemeColors(theme);
   const [products, setProducts] = useState<Product[]>([]);
@@ -134,17 +136,17 @@ export default function AdminProducts() {
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (uploading) {
-      alert('Please wait for image upload to finish.');
+      toast.error('Please wait for image upload to finish.');
       return;
     }
     const images = parseImages(formData.images);
     const priceValue = parsePrice(formData.price);
     if (Number.isNaN(priceValue)) {
-      alert('Please enter a valid price.');
+      toast.error('Please enter a valid price.');
       return;
     }
     if (images.length === 0) {
-      alert('Please upload at least one product image.');
+      toast.error('Please upload at least one product image.');
       return;
     }
     try {
@@ -169,12 +171,12 @@ export default function AdminProducts() {
         setProducts([data.data, ...products]);
         setShowAddModal(false);
         setFormData({ name: '', sku: '', price: '', stock: '', category: '', description: '', images: '' });
-        alert('Product added successfully!');
+        toast.success('Product added successfully!');
       } else {
-        alert(data.message || 'Failed to add product');
+        toast.error(data.message || 'Failed to add product');
       }
     } catch (err) {
-      alert('Network error');
+      toast.error('Network error');
     }
   };
 
@@ -182,14 +184,14 @@ export default function AdminProducts() {
     e.preventDefault();
     if (editingProduct) {
       if (uploading) {
-        alert('Please wait for image upload to finish.');
+        toast.error('Please wait for image upload to finish.');
         return;
       }
       try {
         const images = parseImages(formData.images);
         const priceValue = parsePrice(formData.price);
         if (Number.isNaN(priceValue)) {
-          alert('Please enter a valid price.');
+          toast.error('Please enter a valid price.');
           return;
         }
         const updatedProduct = {
@@ -215,12 +217,12 @@ export default function AdminProducts() {
           ));
           setEditingProduct(null);
           setFormData({ name: '', sku: '', price: '', stock: '', category: '', description: '', images: '' });
-          alert('Product updated successfully!');
+          toast.success('Product updated successfully!');
         } else {
-          alert(data.message || 'Failed to update product');
+          toast.error(data.message || 'Failed to update product');
         }
       } catch (err) {
-        alert('Network error');
+        toast.error('Network error');
       }
     }
   };
@@ -234,12 +236,12 @@ export default function AdminProducts() {
         const data = await res.json();
         if (data.success) {
           setProducts(products.filter(p => p._id !== id));
-          alert('Product deleted successfully!');
+          toast.success('Product deleted successfully!');
         } else {
-          alert(data.message || 'Failed to delete product');
+          toast.error(data.message || 'Failed to delete product');
         }
       } catch (err) {
-        alert('Network error');
+        toast.error('Network error');
       }
     }
   };
@@ -282,7 +284,7 @@ export default function AdminProducts() {
                 <motion.h1
                   className="text-3xl tracking-tight uppercase"
                   style={{
-                    fontFamily: 'var(--font-playfair), serif',
+                    fontFamily: 'var(--font-outfit), sans-serif',
                     color: colors.text
                   }}
                   initial={{ opacity: 0, x: -20 }}
@@ -528,7 +530,7 @@ export default function AdminProducts() {
               <motion.h3
                 className="mb-4 uppercase"
                 style={{
-                  fontFamily: 'var(--font-playfair), serif',
+                  fontFamily: 'var(--font-outfit), sans-serif',
                   fontSize: '20px',
                   color: colors.text
                 }}

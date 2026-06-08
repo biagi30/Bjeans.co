@@ -3,6 +3,7 @@ import { Playfair_Display, Space_Grotesk } from "next/font/google";
 import "@/core/styles/globals.css";
 import { ThemeProvider } from "@/core/providers/ThemeProvider";
 import { LayoutWrapper } from "@/core/components/shared/LayoutWrapper";
+import { ToastProvider } from "@/core/context/ToastContext";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -35,7 +36,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <LayoutWrapper>{children}</LayoutWrapper>
+          <ToastProvider>
+            <LayoutWrapper>{children}</LayoutWrapper>
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

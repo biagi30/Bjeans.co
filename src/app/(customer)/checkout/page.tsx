@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { MapPin, CreditCard, Truck, ArrowLeft, CheckCircle2, Loader2, ChevronRight, X } from "lucide-react";
 import { Container } from "@/core/components/shared";
+import { useToast } from "@/core/context/ToastContext";
 
 interface CartItem {
   id: string;
@@ -32,10 +33,15 @@ function formatIDR(amount: number): string {
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const toast = useToast();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [paymentStep, setPaymentStep] = useState(false);
+  const [createdOrderList, setCreatedOrderList] = useState<{ _id: string; orderNumber: string; totalAmount: number }[]>([]);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [cartKey, setCartKey] = useState<string>("bjeans_cart_guest");
   
   const [address, setAddress] = useState<ShippingAddress>({ name: "", phone: "", label: "", fullAddress: "", city: "", postalCode: "" });
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -68,6 +74,12 @@ export default function CheckoutPage() {
         const data = await res.json();
         const user = data.data.user;
         setUserEmail(user.email);
+        
+        const uid = user._id;
+        if (uid) {
+          setUserId(uid);
+          setCartKey(`bjeans_cart_${uid}`);
+        }
 
         // AMBIL ALAMAT BERDASARKAN KEY EMAIL UNIK USER
         const storedProfile = localStorage.getItem(`bjeans_profile_${user.email}`);
@@ -113,31 +125,272 @@ export default function CheckoutPage() {
     setIsModalOpen(false);
   };
 
-  const handlePlaceOrder = () => {
-    if (!userEmail || checkoutItems.length === 0) return;
+  const handlePlaceOrder = async () => {
+    if (!userEmail || !userId || checkoutItems.length === 0) return;
     setLoading(true);
-    
-    setTimeout(() => {
-      setSuccess(true);
-      
-      // Ambil sisa keranjang belanja global
-      const originalCartStr = localStorage.getItem("bjeans_cart");
+
+    const generateOrderNumber = (prefix: string) => {
+      const timestamp = Date.now().toString(36).toUpperCase();
+      const random = Math.random().toString(36).slice(2, 6).toUpperCase();
+      return `${prefix}-${timestamp}-${random}`;
+    };
+
+    const fullAddrStr = `${address.name} (${address.phone}) - ${address.fullAddress}, ${address.city}, ${address.postalCode}`;
+
+    // Map checkout items to backend schema format
+    const orderItems = checkoutItems.map(item => {
+      let productObjectId = null;
+      if (item.type === "retail") {
+        const parts = item.id.split("-");
+        if (parts.length > 1 && parts[1].length === 24) {
+          productObjectId = parts[1];
+        }
+      }
+      return {
+        itemType: item.type,
+        product: productObjectId,
+        name: item.name,
+        quantity: item.quantity,
+        unitPrice: item.price,
+        totalPrice: item.price * item.quantity,
+        customSpec: item.customSpec || null
+      };
+    });
+
+    const retailItems = orderItems.filter(item => item.itemType === "retail");
+    const customItems = orderItems.filter(item => item.itemType === "custom");
+    const newlyCreated: { _id: string; orderNumber: string; totalAmount: number }[] = [];
+
+    try {
+      if (retailItems.length > 0) {
+        const res = await fetch("/api/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderNumber: generateOrderNumber("RTL"),
+            orderType: "retail",
+            customer: userId,
+            items: retailItems,
+            status: "waiting_payment",
+            paymentStatus: "unpaid",
+            shippingAddress: fullAddrStr,
+            totalAmount: retailItems.reduce((acc, item) => acc + item.totalPrice, 0)
+          })
+        });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          console.error("Retail order error:", res.status, errBody);
+          throw new Error(errBody?.error || "Gagal membuat pesanan retail");
+        }
+        const json = await res.json();
+        if (json.success && json.data) {
+          newlyCreated.push(json.data);
+        }
+      }
+
+      if (customItems.length > 0) {
+        const customPayload = {
+            orderNumber: generateOrderNumber("CST"),
+            orderType: "custom",
+            customer: userId,
+            items: customItems,
+            status: "waiting_payment",
+            paymentStatus: "unpaid",
+            shippingAddress: fullAddrStr,
+            totalAmount: customItems.reduce((acc, item) => acc + item.totalPrice, 0)
+        };
+        const res = await fetch("/api/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(customPayload)
+        });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          console.error("Custom order error:", res.status, errBody);
+          throw new Error(errBody?.error || "Gagal membuat pesanan custom");
+        }
+        const json = await res.json();
+        if (json.success && json.data) {
+          newlyCreated.push(json.data);
+        }
+      }
+
+      // Ambil sisa keranjang belanja global untuk user tertentu
+      const originalCartStr = localStorage.getItem(cartKey);
       if (originalCartStr) {
         const originalCart: CartItem[] = JSON.parse(originalCartStr);
         const updatedCart = originalCart.filter(cartItem => {
           const cId = cartItem.id || cartItem._id;
           return !checkoutItems.some(chkItem => (chkItem.id || chkItem._id) === cId);
         });
-        localStorage.setItem("bjeans_cart", JSON.stringify(updatedCart));
+        localStorage.setItem(cartKey, JSON.stringify(updatedCart));
       }
       
       // Hapus data temporary checkout
       localStorage.removeItem("bjeans_checkout");
+
+      if (newlyCreated.length > 0) {
+        setCreatedOrderList(newlyCreated);
+        setPaymentStep(true);
+      } else {
+        setSuccess(true);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Terjadi kesalahan saat membuat pesanan.");
+    } finally {
       setLoading(false);
-    }, 2000);
+    }
+  };
+
+  const handleSimulatePaymentSuccess = async () => {
+    setLoading(true);
+    try {
+      // Loop through all created orders and trigger PATCH to /api/orders/${id}/payment
+      for (const order of createdOrderList) {
+        const res = await fetch(`/api/orders/${order._id}/payment`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            paymentStatus: "paid",
+            status: "processing"
+          })
+        });
+        if (!res.ok) {
+          throw new Error(`Gagal memperbarui status pembayaran order ${order.orderNumber}`);
+        }
+      }
+      
+      // Clear states & show final success modal
+      setPaymentStep(false);
+      setSuccess(true);
+    } catch (err: any) {
+      toast.error(err.message || "Gagal memproses konfirmasi pembayaran.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!mounted) return null;
+
+  if (paymentStep) {
+    return (
+      <div className="min-h-screen bg-background text-foreground pt-24 pb-16 flex items-center justify-center">
+        <Container className="max-w-md">
+          <div className="glass-card rounded-[24px] p-8 border space-y-6 flex flex-col items-center">
+            <h1 className="text-2xl font-bold tracking-tight text-center">Selesaikan Pembayaran</h1>
+            <p className="text-sm text-muted-foreground text-center">
+              Silakan selesaikan pembayaran untuk pesanan Anda.
+            </p>
+            
+            {/* Total Harga */}
+            <div className="w-full bg-surface-elevated p-4 rounded-xl text-center border">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground">Total Tagihan</span>
+              <p className="text-2xl font-extrabold text-primary mt-1">
+                {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(grandTotal)}
+              </p>
+            </div>
+
+            {/* Metode Pembayaran Detail */}
+            {selectedPayment === "qris" ? (
+              <div className="flex flex-col items-center space-y-4 w-full">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Scan QRIS untuk membayar</p>
+                {/* Modern QR Mockup via SVG */}
+                <div className="bg-white p-4 rounded-2xl border-2 border-primary/20 shadow-md">
+                  <svg className="w-44 h-44" viewBox="0 0 100 100">
+                    <rect width="100" height="100" fill="white" />
+                    {/* Corners */}
+                    <rect x="5" y="5" width="25" height="25" fill="#000" />
+                    <rect x="9" y="9" width="17" height="17" fill="white" />
+                    <rect x="13" y="13" width="9" height="9" fill="#000" />
+                    
+                    <rect x="70" y="5" width="25" height="25" fill="#000" />
+                    <rect x="74" y="9" width="17" height="17" fill="white" />
+                    <rect x="78" y="13" width="9" height="9" fill="#000" />
+
+                    <rect x="5" y="70" width="25" height="25" fill="#000" />
+                    <rect x="9" y="74" width="17" height="17" fill="white" />
+                    <rect x="13" y="78" width="9" height="9" fill="#000" />
+                    
+                    {/* Simulated data blocks */}
+                    <rect x="35" y="10" width="10" height="5" fill="#000" />
+                    <rect x="50" y="5" width="15" height="10" fill="#000" />
+                    <rect x="40" y="20" width="20" height="10" fill="#000" />
+                    <rect x="5" y="35" width="10" height="20" fill="#000" />
+                    <rect x="20" y="40" width="30" height="5" fill="#000" />
+                    <rect x="35" y="35" width="5" height="5" fill="#000" />
+                    <rect x="70" y="35" width="25" height="15" fill="#000" />
+                    <rect x="80" y="55" width="15" height="25" fill="#000" />
+                    <rect x="35" y="50" width="30" height="15" fill="#000" />
+                    <rect x="10" y="60" width="15" height="5" fill="#000" />
+                    <rect x="35" y="70" width="10" height="25" fill="#000" />
+                    <rect x="55" y="75" width="20" height="20" fill="#000" />
+                  </svg>
+                </div>
+                <p className="text-xs text-center text-muted-foreground max-w-xs leading-relaxed">
+                  Gunakan aplikasi e-wallet Anda (GoPay, OVO, ShopeePay) untuk memindai kode QR.
+                </p>
+              </div>
+            ) : (
+              <div className="w-full space-y-4">
+                <div className="border rounded-xl p-4 space-y-3 bg-surface">
+                  <div className="flex justify-between border-b pb-2">
+                    <span className="text-xs text-muted-foreground font-semibold">Bank</span>
+                    <span className="text-sm font-bold text-foreground">BCA (Virtual Account)</span>
+                  </div>
+                  <div className="flex justify-between border-b pb-2">
+                    <span className="text-xs text-muted-foreground font-semibold">Nomor VA</span>
+                    <span className="text-sm font-bold text-primary tracking-wider font-mono">
+                      80777{address.phone || "081234567890"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between pb-1">
+                    <span className="text-xs text-muted-foreground font-semibold">Nama Rekening</span>
+                    <span className="text-sm font-bold text-foreground">BJEANS.CO - {address.name}</span>
+                  </div>
+                </div>
+                
+                <div className="text-xs text-muted-foreground space-y-1.5 list-decimal list-inside p-2 bg-surface-elevated rounded-lg border">
+                  <p className="font-semibold">Petunjuk Transfer:</p>
+                  <p>1. Pilih Transfer {">"} Virtual Account pada m-banking.</p>
+                  <p>2. Masukkan nomor VA di atas.</p>
+                  <p>3. Konfirmasi jumlah tagihan dan bayar.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Simulating Payment Trigger */}
+            <div className="w-full pt-4 space-y-3">
+              <button
+                onClick={handleSimulatePaymentSuccess}
+                disabled={loading}
+                className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-bold hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Memproses Pembayaran...
+                  </>
+                ) : (
+                  "Saya Sudah Bayar"
+                )}
+              </button>
+              
+              <button
+                onClick={() => {
+                  setPaymentStep(false);
+                  router.push("/cart");
+                }}
+                disabled={loading}
+                className="w-full bg-surface hover:bg-muted py-3 rounded-xl font-semibold text-xs border text-muted-foreground"
+              >
+                Batalkan & Kembali
+              </button>
+            </div>
+          </div>
+        </Container>
+      </div>
+    );
+  }
 
   if (success) {
     return (

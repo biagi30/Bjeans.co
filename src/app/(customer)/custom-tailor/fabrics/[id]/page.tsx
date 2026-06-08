@@ -40,7 +40,7 @@ const FALLBACK_FITS = [
     _id: "fit-straight",
     name: "Straight Cut",
     description: "Potongan modern yang sejajar dari lutut ke bawah, memberikan siluet rapi dan fleksibel untuk berbagai acara.",
-    image: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=400&q=80"
+    image: "https://images.unsplash.com/photo-1582552938357-32b906df40cb?auto=format&fit=crop&w=400&q=80"
   },
   {
     _id: "fit-wide",
@@ -79,6 +79,25 @@ export default function FabricDetailPage() {
   // Cart Status State
   const [addedToCart, setAddedToCart] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
+  const [cartKey, setCartKey] = useState<string>("bjeans_cart_guest");
+
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          const userId = data.data?.user?._id;
+          if (userId) {
+            setCartKey(`bjeans_cart_${userId}`);
+          }
+        }
+      } catch (err) {
+        // Keep as guest
+      }
+    }
+    fetchUser();
+  }, []);
 
   useEffect(() => {
     async function fetchFabric() {
@@ -177,14 +196,14 @@ export default function FabricDetailPage() {
 
     // Store in localStorage cart
     setTimeout(() => {
-      const stored = localStorage.getItem("bjeans_cart");
+      const stored = localStorage.getItem(cartKey);
       let cart = stored ? JSON.parse(stored) : [];
       
       // Make sure stored cart is an array
       if (!Array.isArray(cart)) cart = [];
 
       cart.push(cartItem);
-      localStorage.setItem("bjeans_cart", JSON.stringify(cart));
+      localStorage.setItem(cartKey, JSON.stringify(cart));
       
       setIsAdding(false);
       setAddedToCart(true);

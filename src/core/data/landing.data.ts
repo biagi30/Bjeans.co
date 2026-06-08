@@ -1,7 +1,7 @@
 export const landingImages = {
   hero: "https://images.unsplash.com/photo-1631112230741-446762ee05ac?auto=format&fit=crop&w=1600&q=80",
   heroTexture:
-    "https://images.unsplash.com/photo-1582552938357-32b906df40cb?auto=format&fit=crop&w=1800&q=80",
+    "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=1800&q=80",
   productOne:
     "https://images.unsplash.com/photo-1645859610425-f0f4177df5f0?auto=format&fit=crop&w=1200&q=80",
   productTwo:

@@ -8,9 +8,11 @@ import { getThemeColors } from '../theme';
 import { ThemeToggle } from '@/core/components/shared/ThemeToggle';
 import Link from 'next/link';
 import type { Material } from '@/api/models';
+import { useToast } from '@/core/context/ToastContext';
 
 export default function AdminMaterials() {
   const router = useRouter();
+  const toast = useToast();
   const { theme } = useTheme();
   const colors = getThemeColors(theme);
   const [mounted, setMounted] = useState(false);
@@ -68,12 +70,12 @@ export default function AdminMaterials() {
       if (data.success) {
         setShowModal(false);
         fetchMaterials();
-        alert(`Material ${editingId ? 'diperbarui' : 'ditambahkan'} dengan sukses!`);
+        toast.success(`Material ${editingId ? 'diperbarui' : 'ditambahkan'} dengan sukses!`);
       } else {
-        alert(data.message || 'Gagal menyimpan bahan');
+        toast.error(data.message || 'Gagal menyimpan bahan');
       }
     } catch (err) {
-      alert('Kesalahan Jaringan');
+      toast.error('Kesalahan Jaringan');
     }
   };
 
@@ -84,10 +86,10 @@ export default function AdminMaterials() {
         const data = await res.json();
         if (data.success) {
           fetchMaterials();
-          alert('Material deleted dengan sukses!');
+          toast.success('Material deleted dengan sukses!');
         }
       } catch (err) {
-        alert('Kesalahan Jaringan');
+        toast.error('Kesalahan Jaringan');
       }
     }
   };

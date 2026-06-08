@@ -7,33 +7,43 @@ import { useTheme } from 'next-themes';
 import { getThemeColors } from '../theme';
 import { ThemeToggle } from '@/core/components/shared/ThemeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '@/core/context/ToastContext';
 
 interface OrderItem {
-  product: {
+  itemType: 'retail' | 'custom';
+  product?: {
     _id: string;
     name: string;
     price: number;
-  };
+  } | null;
+  name: string;
   quantity: number;
-  price: number;
+  unitPrice: number;
+  totalPrice: number;
+  customSpec?: any;
 }
 
 interface Order {
   _id: string;
-  user?: {
+  orderNumber?: string;
+  customer?: {
+    _id: string;
     name: string;
     email: string;
   };
   items: OrderItem[];
   totalAmount: number;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'waiting_payment' | 'processing' | 'done' | 'shipped';
+  paymentStatus?: 'unpaid' | 'paid' | 'refunded';
   createdAt: string;
   shippingAddress?: string;
   type?: 'retail' | 'custom';
+  orderType?: 'unified' | 'retail' | 'custom';
 }
 
 export default function AdminOrders() {
   const router = useRouter();
+  const toast = useToast();
   const { theme } = useTheme();
   const colors = getThemeColors(theme);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -82,23 +92,36 @@ export default function AdminOrders() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending':
+      case 'waiting_payment':
         return '#F59E0B';
       case 'processing':
         return '#3B82F6';
       case 'shipped':
         return '#8B5CF6';
-      case 'delivered':
+      case 'done':
         return '#10B981';
-      case 'cancelled':
-        return '#EF4444';
       default:
         return '#64748B';
     }
   };
 
+  const getPaymentColor = (status: string) => {
+    switch (status) {
+      case 'unpaid': return '#EF4444';
+      case 'paid': return '#10B981';
+      case 'refunded': return '#F59E0B';
+      default: return '#64748B';
+    }
+  };
+
   const getStatusLabel = (status: string) => {
-    return status ? status.toUpperCase() : 'UNKNOWN';
+    switch (status) {
+      case 'waiting_payment': return 'WAITING PAYMENT';
+      case 'processing': return 'PROCESSING';
+      case 'shipped': return 'SHIPPED';
+      case 'done': return 'DONE';
+      default: return status ? status.toUpperCase() : 'UNKNOWN';
+    }
   };
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
@@ -113,13 +136,13 @@ export default function AdminOrders() {
         setOrders(orders.map(order =>
           order._id === orderId ? { ...order, status: newStatus as any } : order
         ));
-        alert(`Order status updated to ${newStatus}`);
+        toast.success(`Order status updated to ${newStatus}`);
         setSelectedOrder(null);
       } else {
-        alert(data.message || 'Failed to update order');
+        toast.error(data.message || 'Failed to update order');
       }
     } catch (err) {
-      alert('Network error');
+      toast.error('Network error');
     }
   };
 
@@ -152,7 +175,7 @@ export default function AdminOrders() {
                 <motion.h1
                   className="text-3xl tracking-tight uppercase"
                   style={{
-                    fontFamily: 'var(--font-playfair), serif',
+                    fontFamily: 'var(--font-outfit), sans-serif',
                     color: colors.text
                   }}
                   initial={{ opacity: 0, x: -20 }}
@@ -185,11 +208,10 @@ export default function AdminOrders() {
                 whileHover={{ scale: 1.02 }}
               >
                 <option value="all" style={{ backgroundColor: colors.bgSecondary }}>ALL ORDERS</option>
-                <option value="pending" style={{ backgroundColor: colors.bgSecondary }}>PENDING</option>
+                <option value="waiting_payment" style={{ backgroundColor: colors.bgSecondary }}>WAITING PAYMENT</option>
                 <option value="processing" style={{ backgroundColor: colors.bgSecondary }}>PROCESSING</option>
                 <option value="shipped" style={{ backgroundColor: colors.bgSecondary }}>SHIPPED</option>
-                <option value="delivered" style={{ backgroundColor: colors.bgSecondary }}>DELIVERED</option>
-                <option value="cancelled" style={{ backgroundColor: colors.bgSecondary }}>CANCELLED</option>
+                <option value="done" style={{ backgroundColor: colors.bgSecondary }}>DONE</option>
               </motion.select>
             </div>
           </div>
@@ -226,7 +248,7 @@ export default function AdminOrders() {
               </p>
               <p
                 style={{
-                  fontFamily: 'var(--font-playfair), serif',
+                  fontFamily: 'var(--font-outfit), sans-serif',
                   fontSize: '32px',
                   color: colors.text
                 }}
@@ -256,16 +278,16 @@ export default function AdminOrders() {
                   color: colors.textSecondary
                 }}
               >
-                PENDING
+                WAITING PAYMENT
               </p>
               <p
                 style={{
-                  fontFamily: 'var(--font-playfair), serif',
+                  fontFamily: 'var(--font-outfit), sans-serif',
                   fontSize: '32px',
                   color: '#F59E0B'
                 }}
               >
-                {orders.filter(o => o.status === 'pending').length}
+                {orders.filter(o => o.status === 'waiting_payment').length}
               </p>
             </motion.div>
 
@@ -294,7 +316,7 @@ export default function AdminOrders() {
               </p>
               <p
                 style={{
-                  fontFamily: 'var(--font-playfair), serif',
+                  fontFamily: 'var(--font-outfit), sans-serif',
                   fontSize: '32px',
                   color: colors.accent
                 }}
@@ -324,16 +346,16 @@ export default function AdminOrders() {
                   color: colors.textSecondary
                 }}
               >
-                DELIVERED
+                DONE
               </p>
               <p
                 style={{
-                  fontFamily: 'var(--font-playfair), serif',
+                  fontFamily: 'var(--font-outfit), sans-serif',
                   fontSize: '32px',
                   color: '#10B981'
                 }}
               >
-                {orders.filter(o => o.status === 'delivered').length}
+                {orders.filter(o => o.status === 'done').length}
               </p>
             </motion.div>
           </div>
@@ -468,7 +490,7 @@ export default function AdminOrders() {
                           color: colors.text
                         }}
                       >
-                        #{order._id.substring(order._id.length - 6).toUpperCase()}
+                        {order.orderNumber || `#${order._id.substring(order._id.length - 6).toUpperCase()}`}
                       </td>
                       <td className="px-6 py-4">
                         <div>
@@ -480,7 +502,7 @@ export default function AdminOrders() {
                               color: colors.text
                             }}
                           >
-                            {order.user?.name || "Guest User"}
+                            {order.customer?.name || "Guest User"}
                           </p>
                           <p
                             style={{
@@ -490,7 +512,7 @@ export default function AdminOrders() {
                               color: colors.textSecondary
                             }}
                           >
-                            {order.user?.email || "No email"}
+                            {order.customer?.email || "No email"}
                           </p>
                         </div>
                       </td>
@@ -586,7 +608,7 @@ export default function AdminOrders() {
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
                 <motion.h3
                   style={{
-                    fontFamily: 'var(--font-playfair), serif',
+                    fontFamily: 'var(--font-outfit), sans-serif',
                     fontSize: '24px',
                     color: colors.text
                   }}
@@ -640,7 +662,7 @@ export default function AdminOrders() {
                     color: colors.text
                   }}
                 >
-                  {selectedOrder.user?.name || "Guest User"}
+                  {selectedOrder.customer?.name || "Guest User"}
                 </p>
                 <p
                   style={{
@@ -650,7 +672,7 @@ export default function AdminOrders() {
                     color: colors.textSecondary
                   }}
                 >
-                  {selectedOrder.user?.email || "No email"}
+                  {selectedOrder.customer?.email || "No email"}
                 </p>
               </motion.div>
 
@@ -752,7 +774,7 @@ export default function AdminOrders() {
                   </p>
                   <p
                     style={{
-                      fontFamily: 'var(--font-playfair), serif',
+                      fontFamily: 'var(--font-outfit), sans-serif',
                       fontSize: '20px',
                       color: colors.text
                     }}
@@ -784,10 +806,10 @@ export default function AdminOrders() {
                   {selectedOrder.items?.map((item, i) => (
                     <div key={i} className="flex justify-between items-center py-2 border-b border-border/30">
                       <div className="text-sm">
-                        <span className="font-semibold text-foreground">{item.quantity}x</span> {item.product?.name || 'Unknown Product'}
+                        <span className="font-semibold text-foreground">{item.quantity}x</span> {item.name || item.product?.name || 'Unknown Product'}
                       </div>
                       <div className="text-sm font-semibold">
-                        Rp{(item.price * item.quantity).toLocaleString('id-ID')}
+                        Rp{(item.totalPrice || item.unitPrice * item.quantity).toLocaleString('id-ID')}
                       </div>
                     </div>
                   ))}
@@ -845,7 +867,7 @@ export default function AdminOrders() {
                     SHIP
                   </motion.button>
                   <motion.button
-                    onClick={() => handleStatusChange(selectedOrder._id, 'delivered')}
+                    onClick={() => handleStatusChange(selectedOrder._id, 'done')}
                     className="px-4 py-3 rounded-xl"
                     style={{
                       fontFamily: 'var(--font-space), sans-serif',
@@ -858,23 +880,7 @@ export default function AdminOrders() {
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    DELIVER
-                  </motion.button>
-                  <motion.button
-                    onClick={() => handleStatusChange(selectedOrder._id, 'cancelled')}
-                    className="px-4 py-3 rounded-xl"
-                    style={{
-                      fontFamily: 'var(--font-space), sans-serif',
-                      fontWeight: 700,
-                      fontSize: '13px',
-                      backgroundColor: `${colors.error}20`,
-                      color: colors.error,
-                      border: `2px solid ${colors.error}`
-                    }}
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    CANCEL
+                    DONE
                   </motion.button>
                 </div>
               </motion.div>

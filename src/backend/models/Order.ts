@@ -13,6 +13,7 @@ export interface IOrderItem {
 export interface IOrder extends Document {
   orderNumber: string;
   orderType: "unified" | "retail" | "custom";
+  type?: "retail" | "custom";
   parentOrder?: mongoose.Types.ObjectId | null;
   customer: mongoose.Types.ObjectId;
   items: IOrderItem[];
@@ -77,6 +78,11 @@ const orderSchema = new Schema<IOrder>(
       enum: ["unified", "retail", "custom"],
       default: "unified",
     },
+    type: {
+      type: String,
+      enum: ["retail", "custom"],
+      default: "retail",
+    },
     parentOrder: {
       type: Schema.Types.ObjectId,
       ref: "Order",
@@ -120,6 +126,13 @@ const orderSchema = new Schema<IOrder>(
     timestamps: true,
   }
 );
+
+// Pre-save hook to populate "type" from "orderType"
+orderSchema.pre("save", function (this: any) {
+  if (this.orderType) {
+    this.type = this.orderType === "custom" ? "custom" : "retail";
+  }
+});
 
 export const Order: Model<IOrder> =
   mongoose.models.Order || mongoose.model<IOrder>("Order", orderSchema);

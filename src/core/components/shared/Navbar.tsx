@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, User, ShoppingBag, Menu, X } from "lucide-react";
+import { User, ShoppingBag, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/core/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
@@ -46,13 +46,6 @@ export function Navbar() {
 
         {/* Right Actions */}
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            aria-label="Cari"
-            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <Search size={18} />
-          </button>
           
           <Link
             href="/profile"

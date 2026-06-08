@@ -1,6 +1,6 @@
 "use client";
 
-import { Package, ShoppingBag, LogOut, TrendingUp, Calendar, BarChart3, LayoutDashboard, Menu } from 'lucide-react';
+import { Package, ShoppingBag, LogOut, TrendingUp, Calendar, BarChart3, LayoutDashboard, Menu, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
@@ -9,16 +9,45 @@ import { ThemeToggle } from '@/core/components/shared/ThemeToggle';
 import { AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import Link from 'next/link';
 
+interface Order {
+  _id: string;
+  orderNumber?: string;
+  orderType?: 'unified' | 'retail' | 'custom';
+  type?: 'retail' | 'custom';
+  totalAmount: number;
+  status: string;
+  paymentStatus?: string;
+  createdAt: string;
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const { theme } = useTheme();
   const colors = getThemeColors(theme);
   const [mounted, setMounted] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setMounted(true);
+    fetchOrders();
   }, [router]);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/orders');
+      const data = await res.json();
+      if (data.success) {
+        setOrders(data.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch orders for dashboard", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     fetch('/api/auth/logout', { method: 'POST' }); 
@@ -27,37 +56,106 @@ export default function AdminDashboard() {
     router.push('/login');
   };
 
-  // Mock data for dashboard
-  const todayStats = {
-    orders: 8,
-    revenue: 35100000,
-    retailOrders: 5,
-    customOrders: 3
+  const isToday = (date: Date) => {
+    if (isNaN(date.getTime())) return false;
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear();
   };
 
-  const monthStats = {
-    orders: 156,
-    revenue: 678450000,
-    retailOrders: 89,
-    customOrders: 67
+  const isThisMonth = (date: Date) => {
+    if (isNaN(date.getTime())) return false;
+    const today = new Date();
+    return date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear();
   };
 
-  const revenueTrendData = [
-    { day: 'Apr 7', retail: 18000000, custom: 12000000 },
-    { day: 'Apr 8', retail: 22500000, custom: 16500000 },
-    { day: 'Apr 9', retail: 27000000, custom: 14250000 },
-    { day: 'Apr 10', retail: 31500000, custom: 19500000 },
-    { day: 'Apr 11', retail: 28500000, custom: 21750000 },
-    { day: 'Apr 12', retail: 34500000, custom: 24000000 },
-    { day: 'Apr 13', retail: 21000000, custom: 14100000 }
-  ];
+  const getTodayStats = () => {
+    const todayOrdersList = orders.filter(o => isToday(new Date(o.createdAt)));
+    const retail = todayOrdersList.filter(o => (o.orderType || o.type) !== 'custom');
+    const custom = todayOrdersList.filter(o => (o.orderType || o.type) === 'custom');
+    
+    return {
+      orders: todayOrdersList.length,
+      revenue: todayOrdersList.reduce((acc, o) => acc + o.totalAmount, 0),
+      retailOrders: retail.length,
+      customOrders: custom.length
+    };
+  };
+
+  const getMonthStats = () => {
+    const monthOrdersList = orders.filter(o => isThisMonth(new Date(o.createdAt)));
+    const retail = monthOrdersList.filter(o => (o.orderType || o.type) !== 'custom');
+    const custom = monthOrdersList.filter(o => (o.orderType || o.type) === 'custom');
+    
+    return {
+      orders: monthOrdersList.length,
+      revenue: monthOrdersList.reduce((acc, o) => acc + o.totalAmount, 0),
+      retailOrders: retail.length,
+      customOrders: custom.length
+    };
+  };
+
+  const getLast7DaysData = (ordersList: Order[]) => {
+    const data = [];
+    const today = new Date();
+    
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(today.getDate() - i);
+      
+      const label = d.toLocaleDateString('id-ID', { month: 'short', day: 'numeric' });
+      
+      // Filter orders on this day
+      const dayOrders = ordersList.filter(o => {
+        const oDate = new Date(o.createdAt);
+        return oDate.getDate() === d.getDate() &&
+               oDate.getMonth() === d.getMonth() &&
+               oDate.getFullYear() === d.getFullYear();
+      });
+      
+      let retailRevenue = 0;
+      let customRevenue = 0;
+      
+      dayOrders.forEach(o => {
+        const type = o.orderType || o.type || 'retail';
+        if (type === 'custom') {
+          customRevenue += o.totalAmount;
+        } else {
+          retailRevenue += o.totalAmount;
+        }
+      });
+      
+      data.push({
+        day: label,
+        retail: retailRevenue,
+        custom: customRevenue
+      });
+    }
+    
+    return data;
+  };
+
+  const todayStats = getTodayStats();
+  const monthStats = getMonthStats();
+  const revenueTrendData = getLast7DaysData(orders);
 
   const orderDistribution = [
-    { name: 'Pesanan Ritel', value: monthStats.retailOrders, color: colors.accent },
-    { name: 'Pesanan Kustom', value: monthStats.customOrders, color: colors.accentSecondary }
+    { name: 'Pesanan Ritel', value: monthStats.retailOrders || 1, color: colors.accent },
+    { name: 'Pesanan Kustom', value: monthStats.customOrders || 1, color: colors.accentSecondary }
   ];
 
   if (!mounted) return null;
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-3" style={{ backgroundColor: colors.bg, color: colors.text }}>
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <span className="text-lg font-medium" style={{ fontFamily: 'var(--font-space), sans-serif' }}>Memuat statistik dasbor...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: colors.bg, color: colors.text }}>

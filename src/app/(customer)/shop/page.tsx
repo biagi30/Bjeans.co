@@ -153,6 +153,13 @@ export default function ShopPage() {
                   onKeyDown={e => { if (e.key === 'Enter') router.push(`/shop/${product._id}`); }}
                 >
                   <div className="relative h-72 overflow-hidden">
+                    {product.stock <= 0 && (
+                      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2.5px] flex items-center justify-center z-10">
+                        <span className="bg-rose-600 text-white font-bold text-xs uppercase tracking-[0.2em] px-4 py-2 rounded-xl shadow-lg border border-rose-500/20">
+                          Stok Habis
+                        </span>
+                      </div>
+                    )}
                     {product.images.length > 0 ? (
                       <Image
                         src={product.images[0]}

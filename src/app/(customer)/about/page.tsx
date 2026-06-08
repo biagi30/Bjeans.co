@@ -34,7 +34,7 @@ export default function AboutPage() {
             <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
               Tentang Kami
             </p>
-            <h1 className="font-[var(--font-display)] text-4xl font-semibold leading-tight md:text-5xl lg:text-6xl">
+            <h1 className="font-[var(--font-display)] text-3xl font-semibold leading-tight md:text-4xl lg:text-5xl">
               Mendefinisikan Ulang Denim, Satu Jahitan pada Satu Waktu
             </h1>
             <p className="max-w-lg text-muted-foreground leading-relaxed">
@@ -61,7 +61,7 @@ export default function AboutPage() {
           <p className="text-xs uppercase tracking-[0.3em] text-primary">
             Misi Kami
           </p>
-          <h2 className="font-[var(--font-display)] text-3xl font-semibold md:text-4xl">
+          <h2 className="font-[var(--font-display)] text-2xl font-semibold md:text-3xl">
             Untuk merevolusi denim melalui penjahitan custom dan keahlian
             tradisional
           </h2>

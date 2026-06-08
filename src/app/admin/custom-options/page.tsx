@@ -8,9 +8,11 @@ import { getThemeColors } from '../theme';
 import { ThemeToggle } from '@/core/components/shared/ThemeToggle';
 import Link from 'next/link';
 import type { CustomOption } from '@/api/models';
+import { useToast } from '@/core/context/ToastContext';
 
 export default function AdminCustomOptions() {
   const router = useRouter();
+  const toast = useToast();
   const { theme } = useTheme();
   const colors = getThemeColors(theme);
   const [mounted, setMounted] = useState(false);
@@ -66,12 +68,12 @@ export default function AdminCustomOptions() {
       if (data.success) {
         setShowModal(false);
         fetchoptions();
-        alert(`Custom Opsi Kustom ${editingId ? 'diperbarui' : 'ditambahkan'} dengan sukses!`);
+        toast.success(`Custom Opsi Kustom ${editingId ? 'diperbarui' : 'ditambahkan'} dengan sukses!`);
       } else {
-        alert(data.message || 'Failed to save Opsi Kustom');
+        toast.error(data.message || 'Failed to save Opsi Kustom');
       }
     } catch (err) {
-      alert('Kesalahan Jaringan');
+      toast.error('Kesalahan Jaringan');
     }
   };
 
@@ -82,10 +84,10 @@ export default function AdminCustomOptions() {
         const data = await res.json();
         if (data.success) {
           fetchoptions();
-          alert('Opsi Kustom deleted dengan sukses!');
+          toast.success('Opsi Kustom deleted dengan sukses!');
         }
       } catch (err) {
-        alert('Kesalahan Jaringan');
+        toast.error('Kesalahan Jaringan');
       }
     }
   };

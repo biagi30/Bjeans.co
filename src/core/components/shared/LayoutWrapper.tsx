@@ -11,7 +11,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   return (
     <>
       {!isAdmin && <Navbar />}
-      <main className={!isAdmin ? "min-h-screen pt-16" : ""}>{children}</main>
+      <main className={!isAdmin ? "min-h-screen pt-16 customer-layout" : "admin-layout"}>{children}</main>
       {!isAdmin && <FooterSection />}
     </>
   );

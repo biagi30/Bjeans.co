@@ -102,13 +102,26 @@
   --font-display: var(--font-playfair);
 }
 
+:root {
+  --font-display: var(--font-playfair);
+  --font-playfair: var(--font-playfair);
+  --font-outfit: var(--font-space);
+  --font-plus-jakarta: var(--font-space);
+  --font-dm-sans: var(--font-space);
+}
+
 @layer base {
   * {
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: var(--font-space), sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
+    --font-display: var(--font-playfair) !important;
+    --font-playfair: var(--font-playfair) !important;
+    --font-outfit: var(--font-space) !important;
+    --font-space: var(--font-space) !important;
   }
   .dark body {
     background-image: 
@@ -118,11 +131,45 @@
     background-attachment: fixed;
     background-position: center;
   }
+  
+  /* Customer headings: Playfair Display (Serif, matching initial design) */
+  .customer-layout h1,
+  .customer-layout h2,
+  .customer-layout h3,
+  .customer-layout h4,
+  .customer-layout h5,
+  .customer-layout h6 {
+    font-family: var(--font-display) !important;
+  }
+
+  /* Admin headings: Space Grotesk (Sans-serif, clean layout) */
+  .admin-layout h1,
+  .admin-layout h2,
+  .admin-layout h3,
+  .admin-layout h4,
+  .admin-layout h5,
+  .admin-layout h6 {
+    font-family: var(--font-space) !important;
+    font-weight: 700;
+  }
+
+  /* Default headings fallback */
   h1,
   h2,
   h3,
-  h4 {
-    font-family: var(--font-display);
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-space);
+    font-weight: 700;
+  }
+
+  /* Form inputs styling - never bolded */
+  input,
+  select,
+  textarea {
+    font-family: var(--font-space) !important;
+    font-weight: 400 !important;
   }
 }
 
@@ -207,6 +254,21 @@
 /* Green accent for about page */
 .green-accent {
   background: linear-gradient(135deg, #10b981, #059669);
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 
