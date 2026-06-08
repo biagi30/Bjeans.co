@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     }
 
     // Verify signature key
-    const serverKey = process.env.MIDTRANS_SERVER_KEY || "";
+    const serverKey = (process.env.MIDTRANS_SERVER_KEY || "").trim();
     const payloadToHash = String(order_id) + String(status_code) + String(gross_amount) + serverKey;
     const calculatedSignature = crypto
       .createHash("sha512")

@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     }
 
     // Check server key is configured
-    const serverKey = process.env.MIDTRANS_SERVER_KEY || "";
+    const serverKey = (process.env.MIDTRANS_SERVER_KEY || "").trim();
     if (!serverKey) {
       console.error("MIDTRANS_SERVER_KEY is not configured in environment variables");
       return errorResponse("Payment gateway is not configured. Please contact support.", 500);
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       return errorResponse("Invalid transaction total amount", 400);
     }
 
-    const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "";
+    const clientKey = (process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "").trim();
     const isProduction = process.env.NODE_ENV === "production" && !clientKey.startsWith("SB-");
     const midtransUrl = isProduction
       ? "https://app.midtrans.com/snap/v1/transactions"

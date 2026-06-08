@@ -15,12 +15,24 @@ export async function GET() {
       MONGODB_URI_set: !!process.env.MONGODB_URI,
       MIDTRANS_SERVER_KEY_set: !!process.env.MIDTRANS_SERVER_KEY,
       MIDTRANS_SERVER_KEY_prefix: process.env.MIDTRANS_SERVER_KEY
-        ? process.env.MIDTRANS_SERVER_KEY.substring(0, 11) + "..."
+        ? process.env.MIDTRANS_SERVER_KEY.trim().substring(0, 11) + "..."
         : "not_set",
+      MIDTRANS_SERVER_KEY_has_whitespace: process.env.MIDTRANS_SERVER_KEY 
+        ? process.env.MIDTRANS_SERVER_KEY !== process.env.MIDTRANS_SERVER_KEY.trim()
+        : false,
+      MIDTRANS_SERVER_KEY_length: process.env.MIDTRANS_SERVER_KEY 
+        ? process.env.MIDTRANS_SERVER_KEY.trim().length 
+        : 0,
       NEXT_PUBLIC_MIDTRANS_CLIENT_KEY_set: !!process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY,
       NEXT_PUBLIC_MIDTRANS_CLIENT_KEY_prefix: process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY
-        ? process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY.substring(0, 11) + "..."
+        ? process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY.trim().substring(0, 11) + "..."
         : "not_set",
+      NEXT_PUBLIC_MIDTRANS_CLIENT_KEY_has_whitespace: process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY 
+        ? process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY !== process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY.trim()
+        : false,
+      NEXT_PUBLIC_MIDTRANS_CLIENT_KEY_length: process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY 
+        ? process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY.trim().length 
+        : 0,
       MIDTRANS_MERCHANT_ID_set: !!process.env.MIDTRANS_MERCHANT_ID,
     },
     midtrans_test: {
@@ -42,8 +54,8 @@ export async function GET() {
   }
 
   // 2. Test Midtrans Snap API
-  const serverKey = process.env.MIDTRANS_SERVER_KEY || "";
-  const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "";
+  const serverKey = (process.env.MIDTRANS_SERVER_KEY || "").trim();
+  const clientKey = (process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "").trim();
 
   if (!serverKey) {
     diagnostics.midtrans_test.response = "Cannot test: MIDTRANS_SERVER_KEY is missing";
