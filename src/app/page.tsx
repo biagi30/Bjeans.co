@@ -1,16 +1,54 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Scissors, Package, Truck } from "lucide-react";
+import { ArrowRight, Scissors, Package, Truck, Loader2 } from "lucide-react";
 import { Container, SectionHeader } from "@/core/components/shared";
 import {
   landingImages,
-  landingProducts,
   landingBuilderSteps,
   landingTestimonials,
   landingOutlets,
 } from "@/core/data/landing.data";
 
+// Import tipe dan service API yang sama dengan halaman Toko
+import type { Product } from "@/api/models";
+import { getProducts } from "@/api/services";
+
+function formatIDR(amount: number): string {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
 export default function Home() {
+  const router = useRouter();
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Mengambil data produk saat komponen dimuat
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        setLoading(true);
+        const res = await getProducts();
+        // Filter produk yang aktif, dan ambil maksimal 3 produk saja untuk ditampilkan di beranda
+        const activeProducts = res.data.filter((p) => p.isActive);
+        setFeaturedProducts(activeProducts.slice(0, 3));
+      } catch (err) {
+        console.error("Gagal memuat produk unggulan", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProducts();
+  }, []);
+
   return (
     <div className="bg-background text-foreground">
       {/* ─── Hero Section ──────────────────────────────────────── */}
@@ -104,32 +142,52 @@ export default function Home() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-3">
-            {landingProducts.map((product) => (
-              <div
-                key={product.title}
-                className="card-hover glass-card flex flex-col gap-4 overflow-hidden rounded-2xl p-4"
-              >
-                <div className="relative h-64 overflow-hidden rounded-xl">
-                  <Image
-                    src={product.image}
-                    alt={product.title}
-                    fill
-                    className="object-cover transition-transform duration-500 hover:scale-105"
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold">{product.title}</p>
-                    <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
-                      {product.meta}
+            {loading ? (
+              // Menampilkan animasi loading jika data masih diambil
+              <div className="col-span-full flex items-center justify-center py-12 text-muted-foreground">
+                <Loader2 className="mr-2 h-6 w-6 animate-spin text-primary" />
+                Memuat produk unggulan...
+              </div>
+            ) : featuredProducts.length === 0 ? (
+              // Menampilkan pesan jika tidak ada produk
+              <div className="col-span-full text-center py-12 text-muted-foreground">
+                Belum ada produk unggulan yang tersedia.
+              </div>
+            ) : (
+              featuredProducts.map((product) => (
+                <div
+                  key={product._id}
+                  onClick={() => router.push(`/shop/${product._id}`)}
+                  className="card-hover glass-card flex flex-col gap-4 overflow-hidden rounded-2xl p-4 cursor-pointer group"
+                >
+                  <div className="relative h-64 overflow-hidden rounded-xl bg-muted">
+                    {product.images && product.images.length > 0 ? (
+                      <Image
+                        src={product.images[0]}
+                        alt={product.name}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center bg-muted">
+                        <span className="text-sm text-muted-foreground">No Image</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold">{product.name}</p>
+                      <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+                        {product.category || "Denim"}
+                      </p>
+                    </div>
+                    <p className="text-sm font-semibold text-primary">
+                      {formatIDR(product.price)}
                     </p>
                   </div>
-                  <p className="text-sm font-semibold text-primary">
-                    {product.price}
-                  </p>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
 
           <div className="flex justify-center md:hidden">
@@ -161,10 +219,7 @@ export default function Home() {
 
             <div className="grid grid-cols-2 gap-4 pt-2">
               {landingBuilderSteps.map((step) => (
-                <div
-                  key={step.title}
-                  className="glass-card rounded-xl p-4"
-                >
+                <div key={step.title} className="glass-card rounded-xl p-4">
                   <p className="text-sm font-semibold">{step.title}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {step.body}
@@ -218,10 +273,7 @@ export default function Home() {
                 desc: "Pengemasan premium dan pengiriman global. Denim Anda tiba dengan aman dan siap dipakai.",
               },
             ].map((item) => (
-              <div
-                key={item.title}
-                className="glass-card rounded-2xl p-6 space-y-3"
-              >
+              <div key={item.title} className="glass-card rounded-2xl p-6 space-y-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   {item.icon}
                 </div>
