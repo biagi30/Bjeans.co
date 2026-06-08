@@ -23,6 +23,8 @@ export default function AdminMaterials() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '', sku: '', type: 'denim', price: 0, stock: 0, 
     color: '', weightOz: 0, stretch: '', origin: '', isActive: true,
@@ -55,8 +57,57 @@ export default function AdminMaterials() {
     router.push('/login');
   };
 
+  const handleImageUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    setUploadError(null);
+
+    try {
+      const uploads = Array.from(files);
+      const uploadedUrls: string[] = [];
+
+      for (const file of uploads) {
+        const form = new FormData();
+        form.append('file', file);
+
+        const res = await fetch('/api/uploads', {
+          method: 'POST',
+          body: form,
+        });
+
+        const data = await res.json();
+        if (!data.success || !data.data?.url) {
+          throw new Error(data.message || 'Upload failed');
+        }
+
+        uploadedUrls.push(data.data.url as string);
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...uploadedUrls]
+      }));
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = (url: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: prev.images.filter((img) => img !== url)
+    }));
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (uploading) {
+      toast.error('Harap tunggu sampai unggah gambar selesai.');
+      return;
+    }
     try {
       const url = editingId ? `/api/materials/${editingId}` : '/api/materials';
       const method = editingId ? 'PATCH' : 'POST';
@@ -329,13 +380,43 @@ export default function AdminMaterials() {
                 </div>
 
                 <div className="space-y-1 md:col-span-2">
-                  <label className="text-sm font-semibold" style={{ color: colors.textSecondary }}>URL Gambar (pisahkan dengan koma)</label>
-                  <input type="text" value={formData.images.join(', ')} placeholder="https://example.com/img1.jpg, https://example.com/img2.jpg" onChange={e => setFormData({...formData, images: e.target.value.split(',').map(url => url.trim()).filter(url => url !== '')})} className="w-full px-3 py-2 rounded border focus:ring-2 focus:ring-blue-500 outline-none" style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.text }} />
-                  {formData.images.length > 0 && formData.images[0] !== '' && (
-                    <div className="flex gap-2 mt-2 overflow-x-auto">
-                      {formData.images.map((img, idx) => (
-                        <div key={idx} className="h-16 w-16 rounded overflow-hidden flex-shrink-0 border" style={{ borderColor: colors.border }}>
-                          <img src={img} alt={`Preview ${idx}`} className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                  <label className="text-sm font-semibold" style={{ color: colors.textSecondary }}>Unggah Gambar Bahan</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => handleImageUpload(e.target.files)}
+                    className="w-full px-3 py-2 rounded border focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                    style={{
+                      backgroundColor: colors.bgSecondary,
+                      borderColor: colors.border,
+                      color: colors.text,
+                    }}
+                  />
+                  {uploading && (
+                    <p className="mt-1 text-[11px]" style={{ color: colors.textMuted }}>
+                      Mengunggah gambar...
+                    </p>
+                  )}
+                  {uploadError && (
+                    <p className="mt-1 text-[11px]" style={{ color: '#EF4444' }}>
+                      {uploadError}
+                    </p>
+                  )}
+                  {formData.images.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {formData.images.map((img) => (
+                        <div key={img} className="relative h-12 w-12 overflow-hidden rounded border" style={{ borderColor: colors.border }}>
+                          <img src={img} alt="Preview" className="h-full w-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(img)}
+                            className="absolute right-0.5 top-0.5 h-4 w-4 rounded-full text-[10px] flex items-center justify-center"
+                            style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: '#FFFFFF' }}
+                            aria-label="Remove image"
+                          >
+                            ×
+                          </button>
                         </div>
                       ))}
                     </div>
