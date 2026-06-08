@@ -58,7 +58,6 @@ export default function AdminProducts() {
   };
 
   useEffect(() => {
-    
     fetchProducts();
   }, [router]);
 
@@ -499,7 +498,7 @@ export default function AdminProducts() {
         </div>
       </main>
 
-      {/* Add/Edit Product Modal */}
+      {/* Add/Edit Product Modal (UKURAN LEBIH KECIL & RAMPING) */}
       <AnimatePresence>
         {(showAddModal || editingProduct) && (
           <motion.div
@@ -515,7 +514,7 @@ export default function AdminProducts() {
             transition={{ duration: 0.3 }}
           >
             <motion.div
-              className="max-w-2xl w-full mx-auto p-6 rounded-2xl"
+              className="max-w-md w-full mx-auto p-5 rounded-2xl"
               style={{
                 backgroundColor: colors.bgSecondary,
                 ...neumorph
@@ -527,10 +526,10 @@ export default function AdminProducts() {
               transition={{ duration: 0.3 }}
             >
               <motion.h3
-                className="mb-6 uppercase"
+                className="mb-4 uppercase"
                 style={{
                   fontFamily: 'var(--font-playfair), serif',
-                  fontSize: '24px',
+                  fontSize: '20px',
                   color: colors.text
                 }}
                 initial={{ opacity: 0, y: -20 }}
@@ -540,342 +539,355 @@ export default function AdminProducts() {
                 {editingProduct ? 'Edit Product' : 'Add New Product'}
               </motion.h3>
 
-            <form onSubmit={editingProduct ? handleEditProduct : handleAddProduct}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: 0.2 }}
-                >
-                  <label
-                    className="block mb-2"
-                    style={{
-                      fontFamily: 'var(--font-space), sans-serif',
-                      fontWeight: 700,
-                      fontSize: '13px',
-                      letterSpacing: '0.5px',
-                      color: colors.text
-                    }}
+              <form onSubmit={editingProduct ? handleEditProduct : handleAddProduct}>
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  {/* Product Name (Full Width) */}
+                  <motion.div
+                    className="col-span-2"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: 0.2 }}
                   >
-                    PRODUCT NAME *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl outline-none transition-all duration-300"
-                    style={{
-                      fontFamily: 'var(--font-space), sans-serif',
-                      fontWeight: 500,
-                      fontSize: '14px',
-                      backgroundColor: colors.bg,
-                      color: colors.text,
-                      border: `2px solid ${colors.border}`,
-                      ...neumorphInset
-                    }}
-                    placeholder="Enter product name"
-                  />
-                </motion.div>
+                    <label
+                      className="block mb-1"
+                      style={{
+                        fontFamily: 'var(--font-space), sans-serif',
+                        fontWeight: 700,
+                        fontSize: '12px',
+                        letterSpacing: '0.5px',
+                        color: colors.text
+                      }}
+                    >
+                      PRODUCT NAME *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl outline-none transition-all duration-300"
+                      style={{
+                        fontFamily: 'var(--font-space), sans-serif',
+                        fontWeight: 500,
+                        fontSize: '13px',
+                        backgroundColor: colors.bg,
+                        color: colors.text,
+                        border: `2px solid ${colors.border}`,
+                        ...neumorphInset
+                      }}
+                      placeholder="Enter product name"
+                    />
+                  </motion.div>
 
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: 0.25 }}
-                >
-                  <label
-                    className="block mb-2"
-                    style={{
-                      fontFamily: 'var(--font-space), sans-serif',
-                      fontWeight: 700,
-                      fontSize: '13px',
-                      letterSpacing: '0.5px',
-                      color: colors.text
-                    }}
+                  {/* SKU */}
+                  <motion.div
+                    className="col-span-1"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: 0.25 }}
                   >
-                    SKU *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.sku}
-                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl outline-none transition-all duration-300"
-                    style={{
-                      fontFamily: 'var(--font-space), sans-serif',
-                      fontWeight: 500,
-                      fontSize: '14px',
-                      backgroundColor: colors.bg,
-                      color: colors.text,
-                      border: `2px solid ${colors.border}`,
-                      ...neumorphInset
-                    }}
-                    placeholder="Enter SKU"
-                  />
-                </motion.div>
+                    <label
+                      className="block mb-1"
+                      style={{
+                        fontFamily: 'var(--font-space), sans-serif',
+                        fontWeight: 700,
+                        fontSize: '12px',
+                        letterSpacing: '0.5px',
+                        color: colors.text
+                      }}
+                    >
+                      SKU *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.sku}
+                      onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl outline-none transition-all duration-300"
+                      style={{
+                        fontFamily: 'var(--font-space), sans-serif',
+                        fontWeight: 500,
+                        fontSize: '13px',
+                        backgroundColor: colors.bg,
+                        color: colors.text,
+                        border: `2px solid ${colors.border}`,
+                        ...neumorphInset
+                      }}
+                      placeholder="Enter SKU"
+                    />
+                  </motion.div>
 
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: 0.3 }}
-                >
-                  <label
-                    className="block mb-2"
-                    style={{
-                      fontFamily: 'var(--font-space), sans-serif',
-                      fontWeight: 700,
-                      fontSize: '13px',
-                      letterSpacing: '0.5px',
-                      color: colors.text
-                    }}
+                  {/* Category */}
+                  <motion.div
+                    className="col-span-1"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: 0.3 }}
                   >
-                    CATEGORY *
-                  </label>
-                  <select
-                    required
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl outline-none transition-all duration-300"
-                    style={{
-                      fontFamily: 'var(--font-space), sans-serif',
-                      fontWeight: 500,
-                      fontSize: '14px',
-                      backgroundColor: colors.bg,
-                      color: colors.text,
-                      border: `2px solid ${colors.border}`,
-                      ...neumorphInset
-                    }}
-                  >
-                    <option value="" style={{ backgroundColor: colors.bgSecondary }}>Select category</option>
-                    <option value="Jeans" style={{ backgroundColor: colors.bgSecondary }}>Jeans</option>
-                    <option value="Jackets" style={{ backgroundColor: colors.bgSecondary }}>Jackets</option>
-                    <option value="Shirts" style={{ backgroundColor: colors.bgSecondary }}>Shirts</option>
-                    <option value="Accessories" style={{ backgroundColor: colors.bgSecondary }}>Accessories</option>
-                  </select>
-                </motion.div>
+                    <label
+                      className="block mb-1"
+                      style={{
+                        fontFamily: 'var(--font-space), sans-serif',
+                        fontWeight: 700,
+                        fontSize: '12px',
+                        letterSpacing: '0.5px',
+                        color: colors.text
+                      }}
+                    >
+                      CATEGORY *
+                    </label>
+                    <select
+                      required
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl outline-none transition-all duration-300"
+                      style={{
+                        fontFamily: 'var(--font-space), sans-serif',
+                        fontWeight: 500,
+                        fontSize: '13px',
+                        backgroundColor: colors.bg,
+                        color: colors.text,
+                        border: `2px solid ${colors.border}`,
+                        ...neumorphInset
+                      }}
+                    >
+                      <option value="" style={{ backgroundColor: colors.bgSecondary }}>Select category</option>
+                      <option value="Jeans" style={{ backgroundColor: colors.bgSecondary }}>Jeans</option>
+                      <option value="Jackets" style={{ backgroundColor: colors.bgSecondary }}>Jackets</option>
+                      <option value="Shirts" style={{ backgroundColor: colors.bgSecondary }}>Shirts</option>
+                      <option value="Accessories" style={{ backgroundColor: colors.bgSecondary }}>Accessories</option>
+                    </select>
+                  </motion.div>
 
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: 0.4 }}
-                >
-                  <label
-                    className="block mb-2"
-                    style={{
-                      fontFamily: 'var(--font-space), sans-serif',
-                      fontWeight: 700,
-                      fontSize: '13px',
-                      letterSpacing: '0.5px',
-                      color: colors.text
-                    }}
+                  {/* Price */}
+                  <motion.div
+                    className="col-span-1"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: 0.4 }}
                   >
-                    PRICE (Rp) *
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    required
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl outline-none transition-all duration-300"
-                    style={{
-                      fontFamily: 'var(--font-space), sans-serif',
-                      fontWeight: 500,
-                      fontSize: '14px',
-                      backgroundColor: colors.bg,
-                      color: colors.text,
-                      border: `2px solid ${colors.border}`,
-                      ...neumorphInset
-                    }}
-                    placeholder="Enter price"
-                  />
-                </motion.div>
+                    <label
+                      className="block mb-1"
+                      style={{
+                        fontFamily: 'var(--font-space), sans-serif',
+                        fontWeight: 700,
+                        fontSize: '12px',
+                        letterSpacing: '0.5px',
+                        color: colors.text
+                      }}
+                    >
+                      PRICE (Rp) *
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      required
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl outline-none transition-all duration-300"
+                      style={{
+                        fontFamily: 'var(--font-space), sans-serif',
+                        fontWeight: 500,
+                        fontSize: '13px',
+                        backgroundColor: colors.bg,
+                        color: colors.text,
+                        border: `2px solid ${colors.border}`,
+                        ...neumorphInset
+                      }}
+                      placeholder="Enter price"
+                    />
+                  </motion.div>
 
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: 0.5 }}
-                >
-                  <label
-                    className="block mb-2"
-                    style={{
-                      fontFamily: 'var(--font-space), sans-serif',
-                      fontWeight: 700,
-                      fontSize: '13px',
-                      letterSpacing: '0.5px',
-                      color: colors.text
-                    }}
+                  {/* Stock */}
+                  <motion.div
+                    className="col-span-1"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: 0.5 }}
                   >
-                    STOCK *
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={formData.stock}
-                    onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl outline-none transition-all duration-300"
-                    style={{
-                      fontFamily: 'var(--font-space), sans-serif',
-                      fontWeight: 500,
-                      fontSize: '14px',
-                      backgroundColor: colors.bg,
-                      color: colors.text,
-                      border: `2px solid ${colors.border}`,
-                      ...neumorphInset
-                    }}
-                    placeholder="Enter stock quantity"
-                  />
-                </motion.div>
-                
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: 0.6 }}
-                  className="md:col-span-2"
-                >
-                  <label
-                    className="block mb-2"
-                    style={{
-                      fontFamily: 'var(--font-space), sans-serif',
-                      fontWeight: 700,
-                      fontSize: '13px',
-                      letterSpacing: '0.5px',
-                      color: colors.text
-                    }}
+                    <label
+                      className="block mb-1"
+                      style={{
+                        fontFamily: 'var(--font-space), sans-serif',
+                        fontWeight: 700,
+                        fontSize: '12px',
+                        letterSpacing: '0.5px',
+                        color: colors.text
+                      }}
+                    >
+                      STOCK *
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      value={formData.stock}
+                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl outline-none transition-all duration-300"
+                      style={{
+                        fontFamily: 'var(--font-space), sans-serif',
+                        fontWeight: 500,
+                        fontSize: '13px',
+                        backgroundColor: colors.bg,
+                        color: colors.text,
+                        border: `2px solid ${colors.border}`,
+                        ...neumorphInset
+                      }}
+                      placeholder="Qty"
+                    />
+                  </motion.div>
+                  
+                  {/* Description (Full Width) */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: 0.6 }}
+                    className="col-span-2"
                   >
-                    DESCRIPTION
-                  </label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl outline-none transition-all duration-300 min-h-[100px]"
-                    style={{
-                      fontFamily: 'var(--font-space), sans-serif',
-                      fontWeight: 500,
-                      fontSize: '14px',
-                      backgroundColor: colors.bg,
-                      color: colors.text,
-                      border: `2px solid ${colors.border}`,
-                      ...neumorphInset
-                    }}
-                    placeholder="Enter description"
-                  />
-                </motion.div>
+                    <label
+                      className="block mb-1"
+                      style={{
+                        fontFamily: 'var(--font-space), sans-serif',
+                        fontWeight: 700,
+                        fontSize: '12px',
+                        letterSpacing: '0.5px',
+                        color: colors.text
+                      }}
+                    >
+                      DESCRIPTION
+                    </label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl outline-none transition-all duration-300 min-h-[70px]"
+                      style={{
+                        fontFamily: 'var(--font-space), sans-serif',
+                        fontWeight: 500,
+                        fontSize: '13px',
+                        backgroundColor: colors.bg,
+                        color: colors.text,
+                        border: `2px solid ${colors.border}`,
+                        ...neumorphInset
+                      }}
+                      placeholder="Enter description"
+                    />
+                  </motion.div>
 
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: 0.65 }}
-                  className="md:col-span-2"
-                >
-                  <label
-                    className="block mb-2"
+                  {/* Upload Images (Full Width) */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: 0.65 }}
+                    className="col-span-2"
+                  >
+                    <label
+                      className="block mb-1"
+                      style={{
+                        fontFamily: 'var(--font-space), sans-serif',
+                        fontWeight: 700,
+                        fontSize: '12px',
+                        letterSpacing: '0.5px',
+                        color: colors.text
+                      }}
+                    >
+                      UPLOAD PRODUCT IMAGES
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => handleImageUpload(e.target.files)}
+                      className="w-full px-3 py-2 rounded-xl outline-none transition-all duration-300"
+                      style={{
+                        fontFamily: 'var(--font-space), sans-serif',
+                        fontWeight: 500,
+                        fontSize: '13px',
+                        backgroundColor: colors.bg,
+                        color: colors.text,
+                        border: `2px solid ${colors.border}`,
+                        ...neumorphInset
+                      }}
+                    />
+                    {uploading && (
+                      <p className="mt-1 text-[11px]" style={{ color: colors.textSecondary }}>
+                        Uploading images...
+                      </p>
+                    )}
+                    {uploadError && (
+                      <p className="mt-1 text-[11px]" style={{ color: '#EF4444' }}>
+                        {uploadError}
+                      </p>
+                    )}
+                    {parseImages(formData.images).length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {parseImages(formData.images).map((img) => (
+                          <div key={img} className="relative h-12 w-12 overflow-hidden rounded border" style={{ borderColor: colors.border }}>
+                            <img src={img} alt="Preview" className="h-full w-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => removeImage(img)}
+                              className="absolute right-0.5 top-0.5 h-4 w-4 rounded-full text-[10px] flex items-center justify-center"
+                              style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: '#FFFFFF' }}
+                              aria-label="Remove image"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                </div>
+
+                {/* Footer Buttons */}
+                <div className="flex gap-3">
+                  <motion.button
+                    type="button"
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setEditingProduct(null);
+                    }}
+                    className="flex-1 px-4 py-2.5 rounded-xl"
                     style={{
                       fontFamily: 'var(--font-space), sans-serif',
                       fontWeight: 700,
-                      fontSize: '13px',
-                      letterSpacing: '0.5px',
-                      color: colors.text
+                      fontSize: '12px',
+                      color: colors.textMuted,
+                      backgroundColor: colors.bg
                     }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.6 }}
                   >
-                    UPLOAD PRODUCT IMAGES
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={(e) => handleImageUpload(e.target.files)}
-                    className="w-full px-4 py-3 rounded-xl outline-none transition-all duration-300"
+                    CANCEL
+                  </motion.button>
+                  <motion.button
+                    type="submit"
+                    className="flex-1 px-4 py-2.5 rounded-xl"
                     style={{
                       fontFamily: 'var(--font-space), sans-serif',
-                      fontWeight: 500,
-                      fontSize: '14px',
-                      backgroundColor: colors.bg,
-                      color: colors.text,
-                      border: `2px solid ${colors.border}`,
-                      ...neumorphInset
+                      fontWeight: 800,
+                      fontSize: '12px',
+                      letterSpacing: '1px',
+                      backgroundColor: colors.accent,
+                      color: '#FFFFFF',
+                      ...neumorph
                     }}
-                  />
-                  {uploading && (
-                    <p className="mt-2 text-xs" style={{ color: colors.textSecondary }}>
-                      Uploading images...
-                    </p>
-                  )}
-                  {uploadError && (
-                    <p className="mt-2 text-xs" style={{ color: '#EF4444' }}>
-                      {uploadError}
-                    </p>
-                  )}
-                  {parseImages(formData.images).length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {parseImages(formData.images).map((img) => (
-                        <div key={img} className="relative h-16 w-16 overflow-hidden rounded border" style={{ borderColor: colors.border }}>
-                          <img src={img} alt="Preview" className="h-full w-full object-cover" />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(img)}
-                            className="absolute right-1 top-1 h-5 w-5 rounded-full text-xs"
-                            style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: '#FFFFFF' }}
-                            aria-label="Remove image"
-                          >
-                            x
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </motion.div>
-              </div>
-
-              <div className="flex gap-4">
-                <motion.button
-                  type="button"
-                  onClick={() => {
-                    setShowAddModal(false);
-                    setEditingProduct(null);
-                  }}
-                  className="flex-1 px-6 py-3 rounded-xl"
-                  style={{
-                    fontFamily: 'var(--font-space), sans-serif',
-                    fontWeight: 700,
-                    fontSize: '13px',
-                    color: colors.textMuted,
-                    backgroundColor: colors.bg
-                  }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.6 }}
-                >
-                  CANCEL
-                </motion.button>
-                <motion.button
-                  type="submit"
-                  className="flex-1 px-6 py-3 rounded-xl"
-                  style={{
-                    fontFamily: 'var(--font-space), sans-serif',
-                    fontWeight: 800,
-                    fontSize: '13px',
-                    letterSpacing: '1px',
-                    backgroundColor: colors.accent,
-                    color: '#FFFFFF'
-                  }}
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.7 }}
-                >
-                  {editingProduct ? 'UPDATE' : 'ADD'}
-                </motion.button>
-              </div>
-            </form>
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.7 }}
+                  >
+                    {editingProduct ? 'UPDATE' : 'ADD'}
+                  </motion.button>
+                </div>
+              </form>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
+        )}
       </AnimatePresence>
     </motion.div>
   );
 }
-

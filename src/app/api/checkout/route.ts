@@ -20,7 +20,8 @@ export async function POST(request: Request) {
       return errorResponse(error, 400);
     }
 
-    const { cartId, shippingAddress = "" } = value;
+    // 1. TAMBAHKAN 'selectedItemIds' dari request body frontend
+    const { cartId, shippingAddress = "", selectedItemIds = [] } = value;
 
     const cart = await Cart.findById(cartId).populate("user");
 
@@ -32,9 +33,20 @@ export async function POST(request: Request) {
       return errorResponse("Cart is empty", 400);
     }
 
-    const retailItems = cart.items.filter((item: any) => item.itemType === "retail");
-    const customItems = cart.items.filter((item: any) => item.itemType === "custom");
-    const computedTotal = cart.items.reduce(
+    // 2. FILTER ITEM: Hanya memproses item yang ID-nya dikirim (dicentang) oleh user
+    const itemsToCheckout = cart.items.filter((item: any) => 
+      selectedItemIds.includes(item._id.toString())
+    );
+
+    if (!itemsToCheckout.length) {
+      return errorResponse("Tidak ada produk terpilih untuk di-checkout", 400);
+    }
+
+    // 3. SEPARASI SEKARANG MENGGUNAKAN 'itemsToCheckout', BUKAN 'cart.items' penuh
+    const retailItems = itemsToCheckout.filter((item: any) => item.itemType === "retail");
+    const customItems = itemsToCheckout.filter((item: any) => item.itemType === "custom");
+    
+    const computedTotal = itemsToCheckout.reduce(
       (sum: number, item: any) => sum + item.totalPrice,
       0
     );
@@ -43,16 +55,12 @@ export async function POST(request: Request) {
       return errorResponse("Cart total is invalid", 400);
     }
 
-    if (cart.totalAmount !== computedTotal) {
-      cart.totalAmount = computedTotal;
-      await cart.save();
-    }
-
+    // Buat order utama (Unified) khusus untuk item terpilih
     const unifiedOrder = await Order.create({
       orderNumber: generateOrderNumber("UNF"),
       orderType: "unified",
       customer: cart.user,
-      items: cart.items,
+      items: itemsToCheckout, // Menggunakan item terpilih
       status: "waiting_payment",
       paymentStatus: "unpaid",
       shippingAddress,
@@ -101,8 +109,18 @@ export async function POST(request: Request) {
       );
     }
 
-    cart.items = [];
-    cart.totalAmount = 0;
+    // 4. LOGIKA PEMBERSIHAN KERANJANG BARU:
+    // Buang item yang dibeli dari keranjang, biarkan item sisanya tetap tinggal di keranjang
+    cart.items = cart.items.filter((item: any) => 
+      !selectedItemIds.includes(item._id.toString())
+    );
+
+    // Hitung ulang total harga barang yang tersisa di dalam keranjang
+    cart.totalAmount = cart.items.reduce(
+      (sum: number, item: any) => sum + item.totalPrice,
+      0
+    );
+    
     await cart.save();
 
     return successResponse({
@@ -113,4 +131,5 @@ export async function POST(request: Request) {
     return errorResponse(err.message, 500);
   }
 }
+
 export const dynamic = "force-dynamic";
