@@ -22,6 +22,7 @@ export default function AdminCustomOptions() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     type: 'fit', name: '', description: '', priceDelta: 0, image: '', isActive: true
   });
@@ -77,18 +78,25 @@ export default function AdminCustomOptions() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus opsi ini?')) {
-      try {
-        const res = await fetch(`/api/custom-options/${id}`, { method: 'DELETE' });
-        const data = await res.json();
-        if (data.success) {
-          fetchoptions();
-          toast.success('Opsi Kustom deleted dengan sukses!');
-        }
-      } catch (err) {
-        toast.error('Kesalahan Jaringan');
+  const handleDelete = (id: string) => {
+    setDeleteConfirmId(id);
+  };
+
+  const executeDelete = async () => {
+    if (!deleteConfirmId) return;
+    try {
+      const res = await fetch(`/api/custom-options/${deleteConfirmId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        fetchoptions();
+        toast.success('Opsi Kustom deleted dengan sukses!');
+      } else {
+        toast.error(data.message || 'Gagal menghapus opsi kustom');
       }
+    } catch (err) {
+      toast.error('Kesalahan Jaringan');
+    } finally {
+      setDeleteConfirmId(null);
     }
   };
 
@@ -299,6 +307,37 @@ export default function AdminCustomOptions() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div 
+            className="rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col p-6 border"
+            style={{ backgroundColor: colors.bg, borderColor: colors.border }}
+          >
+            <h3 className="text-xl font-bold mb-2" style={{ color: colors.text }}>Hapus Opsi Kustom</h3>
+            <p className="text-sm mb-6" style={{ color: colors.textSecondary }}>
+              Apakah Anda yakin ingin menghapus opsi kustom ini? Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button 
+                type="button" 
+                onClick={() => setDeleteConfirmId(null)} 
+                className="px-4 py-2 rounded-lg font-medium text-sm transition"
+                style={{ backgroundColor: colors.bgSecondary, color: colors.text }}
+              >
+                Batal
+              </button>
+              <button 
+                type="button" 
+                onClick={executeDelete} 
+                className="px-4 py-2 rounded-lg font-medium text-sm text-white bg-red-600 hover:bg-red-700 transition"
+              >
+                Hapus
+              </button>
+            </div>
           </div>
         </div>
       )}

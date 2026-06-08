@@ -39,6 +39,7 @@ export default function CheckoutPage() {
   const [success, setSuccess] = useState(false);
   const [paymentStep, setPaymentStep] = useState(false);
   const [createdOrderList, setCreatedOrderList] = useState<{ _id: string; orderNumber: string; totalAmount: number }[]>([]);
+  const [snapToken, setSnapToken] = useState<string>("");
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [cartKey, setCartKey] = useState<string>("bjeans_cart_guest");
@@ -123,6 +124,53 @@ export default function CheckoutPage() {
     e.preventDefault();
     setAddress(formAddress);
     setIsModalOpen(false);
+  };
+
+  const triggerSnapPayment = (
+    token: string,
+    ordersList: { _id: string; orderNumber: string; totalAmount: number }[]
+  ) => {
+    if (typeof window !== "undefined" && (window as any).snap) {
+      (window as any).snap.pay(token, {
+        onSuccess: async (result: any) => {
+          console.log("Midtrans payment success:", result);
+          setLoading(true);
+          try {
+            // Update all orders in the list
+            for (const order of ordersList) {
+              await fetch(`/api/orders/${order._id}/payment`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  paymentStatus: "paid",
+                  status: "processing"
+                })
+              });
+            }
+            setPaymentStep(false);
+            setSuccess(true);
+          } catch (err: any) {
+            toast.error("Gagal mengonfirmasi pembayaran ke server: " + err.message);
+          } finally {
+            setLoading(false);
+          }
+        },
+        onPending: (result: any) => {
+          console.log("Midtrans payment pending:", result);
+          toast.info("Pembayaran tertunda. Silakan selesaikan pembayaran Anda sesuai petunjuk.");
+        },
+        onError: (result: any) => {
+          console.error("Midtrans payment error:", result);
+          toast.error("Pembayaran gagal. Silakan coba metode pembayaran lain.");
+        },
+        onClose: () => {
+          console.log("Midtrans payment popup closed");
+          toast.info("Anda menutup jendela pembayaran sebelum selesai.");
+        }
+      });
+    } else {
+      toast.error("Midtrans Snap SDK gagal dimuat. Coba muat ulang halaman.");
+    }
   };
 
   const handlePlaceOrder = async () => {
@@ -231,40 +279,37 @@ export default function CheckoutPage() {
 
       if (newlyCreated.length > 0) {
         setCreatedOrderList(newlyCreated);
-        setPaymentStep(true);
+        
+        // --- FETCH MIDTRANS TOKEN ---
+        const tokenRes = await fetch("/api/payment/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderIds: newlyCreated.map(o => o._id),
+            shippingFee,
+            serviceFee: 2000
+          })
+        });
+
+        if (!tokenRes.ok) {
+          const errData = await tokenRes.json().catch(() => ({}));
+          throw new Error(errData.error || "Gagal mendapatkan token pembayaran dari Midtrans.");
+        }
+
+        const tokenJson = await tokenRes.json();
+        if (tokenJson.success && tokenJson.data?.token) {
+          const token = tokenJson.data.token;
+          setSnapToken(token);
+          setPaymentStep(true);
+          triggerSnapPayment(token, newlyCreated);
+        } else {
+          throw new Error("Respon pembayaran Midtrans tidak valid.");
+        }
       } else {
         setSuccess(true);
       }
     } catch (err: any) {
       toast.error(err.message || "Terjadi kesalahan saat membuat pesanan.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSimulatePaymentSuccess = async () => {
-    setLoading(true);
-    try {
-      // Loop through all created orders and trigger PATCH to /api/orders/${id}/payment
-      for (const order of createdOrderList) {
-        const res = await fetch(`/api/orders/${order._id}/payment`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            paymentStatus: "paid",
-            status: "processing"
-          })
-        });
-        if (!res.ok) {
-          throw new Error(`Gagal memperbarui status pembayaran order ${order.orderNumber}`);
-        }
-      }
-      
-      // Clear states & show final success modal
-      setPaymentStep(false);
-      setSuccess(true);
-    } catch (err: any) {
-      toast.error(err.message || "Gagal memproses konfirmasi pembayaran.");
     } finally {
       setLoading(false);
     }
@@ -279,7 +324,7 @@ export default function CheckoutPage() {
           <div className="glass-card rounded-[24px] p-8 border space-y-6 flex flex-col items-center">
             <h1 className="text-2xl font-bold tracking-tight text-center">Selesaikan Pembayaran</h1>
             <p className="text-sm text-muted-foreground text-center">
-              Silakan selesaikan pembayaran untuk pesanan Anda.
+              Silakan selesaikan pembayaran untuk pesanan Anda menggunakan tombol di bawah ini.
             </p>
             
             {/* Total Harga */}
@@ -290,88 +335,27 @@ export default function CheckoutPage() {
               </p>
             </div>
 
-            {/* Metode Pembayaran Detail */}
-            {selectedPayment === "qris" ? (
-              <div className="flex flex-col items-center space-y-4 w-full">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Scan QRIS untuk membayar</p>
-                {/* Modern QR Mockup via SVG */}
-                <div className="bg-white p-4 rounded-2xl border-2 border-primary/20 shadow-md">
-                  <svg className="w-44 h-44" viewBox="0 0 100 100">
-                    <rect width="100" height="100" fill="white" />
-                    {/* Corners */}
-                    <rect x="5" y="5" width="25" height="25" fill="#000" />
-                    <rect x="9" y="9" width="17" height="17" fill="white" />
-                    <rect x="13" y="13" width="9" height="9" fill="#000" />
-                    
-                    <rect x="70" y="5" width="25" height="25" fill="#000" />
-                    <rect x="74" y="9" width="17" height="17" fill="white" />
-                    <rect x="78" y="13" width="9" height="9" fill="#000" />
-
-                    <rect x="5" y="70" width="25" height="25" fill="#000" />
-                    <rect x="9" y="74" width="17" height="17" fill="white" />
-                    <rect x="13" y="78" width="9" height="9" fill="#000" />
-                    
-                    {/* Simulated data blocks */}
-                    <rect x="35" y="10" width="10" height="5" fill="#000" />
-                    <rect x="50" y="5" width="15" height="10" fill="#000" />
-                    <rect x="40" y="20" width="20" height="10" fill="#000" />
-                    <rect x="5" y="35" width="10" height="20" fill="#000" />
-                    <rect x="20" y="40" width="30" height="5" fill="#000" />
-                    <rect x="35" y="35" width="5" height="5" fill="#000" />
-                    <rect x="70" y="35" width="25" height="15" fill="#000" />
-                    <rect x="80" y="55" width="15" height="25" fill="#000" />
-                    <rect x="35" y="50" width="30" height="15" fill="#000" />
-                    <rect x="10" y="60" width="15" height="5" fill="#000" />
-                    <rect x="35" y="70" width="10" height="25" fill="#000" />
-                    <rect x="55" y="75" width="20" height="20" fill="#000" />
-                  </svg>
-                </div>
-                <p className="text-xs text-center text-muted-foreground max-w-xs leading-relaxed">
-                  Gunakan aplikasi e-wallet Anda (GoPay, OVO, ShopeePay) untuk memindai kode QR.
-                </p>
+            <div className="w-full space-y-4 py-2">
+              <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-center gap-3 text-xs text-muted-foreground text-center justify-center">
+                <CreditCard className="text-primary shrink-0" size={18} />
+                <span>Klik tombol di bawah untuk membuka halaman pembayaran Midtrans.</span>
               </div>
-            ) : (
-              <div className="w-full space-y-4">
-                <div className="border rounded-xl p-4 space-y-3 bg-surface">
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="text-xs text-muted-foreground font-semibold">Bank</span>
-                    <span className="text-sm font-bold text-foreground">BCA (Virtual Account)</span>
-                  </div>
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="text-xs text-muted-foreground font-semibold">Nomor VA</span>
-                    <span className="text-sm font-bold text-primary tracking-wider font-mono">
-                      80777{address.phone || "081234567890"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between pb-1">
-                    <span className="text-xs text-muted-foreground font-semibold">Nama Rekening</span>
-                    <span className="text-sm font-bold text-foreground">BJEANS.CO - {address.name}</span>
-                  </div>
-                </div>
-                
-                <div className="text-xs text-muted-foreground space-y-1.5 list-decimal list-inside p-2 bg-surface-elevated rounded-lg border">
-                  <p className="font-semibold">Petunjuk Transfer:</p>
-                  <p>1. Pilih Transfer {">"} Virtual Account pada m-banking.</p>
-                  <p>2. Masukkan nomor VA di atas.</p>
-                  <p>3. Konfirmasi jumlah tagihan dan bayar.</p>
-                </div>
-              </div>
-            )}
+            </div>
 
-            {/* Simulating Payment Trigger */}
-            <div className="w-full pt-4 space-y-3">
+            {/* Pay Button */}
+            <div className="w-full space-y-3">
               <button
-                onClick={handleSimulatePaymentSuccess}
+                onClick={() => triggerSnapPayment(snapToken, createdOrderList)}
                 disabled={loading}
                 className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-bold hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {loading ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin" />
-                    Memproses Pembayaran...
+                    Memproses...
                   </>
                 ) : (
-                  "Saya Sudah Bayar"
+                  "Bayar Sekarang"
                 )}
               </button>
               
@@ -383,7 +367,7 @@ export default function CheckoutPage() {
                 disabled={loading}
                 className="w-full bg-surface hover:bg-muted py-3 rounded-xl font-semibold text-xs border text-muted-foreground"
               >
-                Batalkan & Kembali
+                Batalkan & Kembali ke Keranjang
               </button>
             </div>
           </div>
@@ -469,17 +453,19 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* METODE PEMBAYARAN UI */}
+            {/* METODE PEMBAYARAN INFO */}
             <div className="glass-card rounded-[20px] p-5 border space-y-4">
               <div className="flex items-center gap-2 font-semibold text-sm uppercase text-primary border-b pb-3"><CreditCard size={16} /> Metode Pembayaran</div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {paymentMethods.map((method) => (
-                  <label key={method.id} className={`border rounded-xl p-4 flex flex-col justify-between gap-1 cursor-pointer transition-all ${selectedPayment === method.id ? "border-primary bg-primary/5" : "border-border/60"}`}>
-                    <input type="radio" name="payment" checked={selectedPayment === method.id} onChange={() => setSelectedPayment(method.id)} className="sr-only" />
-                    <p className="font-semibold text-sm">{method.name}</p>
-                    <p className="text-[10px] uppercase text-muted-foreground tracking-wider">{method.group}</p>
-                  </label>
-                ))}
+              <div className="bg-surface-elevated/40 border border-border/40 p-4 rounded-xl flex items-start gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg text-primary shrink-0">
+                  <CreditCard size={20} />
+                </div>
+                <div className="space-y-1">
+                  <p className="font-semibold text-sm text-foreground">Midtrans Payment Gateway</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Pembayaran aman & instan. Mendukung QRIS, GoPay, ShopeePay, Transfer Bank (Virtual Account), dan Kartu Kredit.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

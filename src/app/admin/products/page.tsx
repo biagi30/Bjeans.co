@@ -29,6 +29,7 @@ export default function AdminProducts() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -227,22 +228,27 @@ export default function AdminProducts() {
     }
   };
 
-  const handleDeleteProduct = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      try {
-        const res = await fetch(`/api/products/${id}`, {
-          method: 'DELETE',
-        });
-        const data = await res.json();
-        if (data.success) {
-          setProducts(products.filter(p => p._id !== id));
-          toast.success('Product deleted successfully!');
-        } else {
-          toast.error(data.message || 'Failed to delete product');
-        }
-      } catch (err) {
-        toast.error('Network error');
+  const handleDeleteProduct = (id: string) => {
+    setDeleteConfirmId(id);
+  };
+
+  const executeDeleteProduct = async () => {
+    if (!deleteConfirmId) return;
+    try {
+      const res = await fetch(`/api/products/${deleteConfirmId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setProducts(products.filter(p => p._id !== deleteConfirmId));
+        toast.success('Product deleted successfully!');
+      } else {
+        toast.error(data.message || 'Failed to delete product');
       }
+    } catch (err) {
+      toast.error('Network error');
+    } finally {
+      setDeleteConfirmId(null);
     }
   };
 
@@ -890,6 +896,38 @@ export default function AdminProducts() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm pointer-events-auto">
+          <div 
+            className="rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col p-6 border"
+            style={{ backgroundColor: colors.bg, borderColor: colors.border }}
+          >
+            <h3 className="text-xl font-bold mb-2" style={{ color: colors.text }}>Hapus Produk</h3>
+            <p className="text-sm mb-6" style={{ color: colors.textSecondary }}>
+              Apakah Anda yakin ingin menghapus produk ini? Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button 
+                type="button" 
+                onClick={() => setDeleteConfirmId(null)} 
+                className="px-4 py-2 rounded-lg font-medium text-sm transition"
+                style={{ backgroundColor: colors.bgSecondary, color: colors.text }}
+              >
+                Batal
+              </button>
+              <button 
+                type="button" 
+                onClick={executeDeleteProduct} 
+                className="px-4 py-2 rounded-lg font-medium text-sm text-white bg-red-600 hover:bg-red-700 transition"
+              >
+                Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

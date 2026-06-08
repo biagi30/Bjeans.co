@@ -4,6 +4,7 @@ import "@/core/styles/globals.css";
 import { ThemeProvider } from "@/core/providers/ThemeProvider";
 import { LayoutWrapper } from "@/core/components/shared/LayoutWrapper";
 import { ToastProvider } from "@/core/context/ToastContext";
+import Script from "next/script";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -27,6 +28,12 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "";
+  const isProduction = process.env.NODE_ENV === "production" && !clientKey.startsWith("SB-");
+  const snapUrl = isProduction
+    ? "https://app.midtrans.com/snap/snap.js"
+    : "https://app.sandbox.midtrans.com/snap/snap.js";
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${playfair.variable} ${spaceGrotesk.variable} antialiased`}>
@@ -40,7 +47,15 @@ export default function RootLayout({
             <LayoutWrapper>{children}</LayoutWrapper>
           </ToastProvider>
         </ThemeProvider>
+        {clientKey && (
+          <Script
+            src={snapUrl}
+            data-client-key={clientKey}
+            strategy="beforeInteractive"
+          />
+        )}
       </body>
     </html>
   );
 }
+
