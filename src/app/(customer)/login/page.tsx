@@ -1,15 +1,13 @@
-"use client";
+import React, { Suspense } from "react";
+import LoginForm from "./LoginForm";
 
-import dynamic from "next/dynamic";
-import React from "react";
-
-// Use next/dynamic with ssr: false to completely bypass any prerender error 
-// caused by useSearchParams on Vercel deployment.
-const LoginFormClient = dynamic(() => import("./LoginForm"), { 
-  ssr: false,
-  loading: () => <div className="min-h-screen flex items-center justify-center pt-16">Loading...</div>
-});
+// Force dynamic rendering on Vercel to bypass static prerendering completely
+export const dynamic = "force-dynamic";
 
 export default function LoginPage() {
-  return <LoginFormClient />;
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center pt-16 text-foreground">Loading...</div>}>
+      <LoginForm />
+    </Suspense>
+  );
 }
