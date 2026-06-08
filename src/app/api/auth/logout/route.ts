@@ -1,10 +1,9 @@
 import { successResponse } from "@/backend/utils/apiResponse";
-import { cookies } from "next/headers";
 
 export async function POST() {
-  const cookieStore = await cookies();
-  cookieStore.delete("auth_token");
-  return successResponse({ message: "Logged out successfully" }, 200);
+  const response = successResponse({ message: "Logged out successfully" }, 200);
+  response.cookies.delete("auth_token");
+  return response;
 }
 
 export const dynamic = "force-dynamic";

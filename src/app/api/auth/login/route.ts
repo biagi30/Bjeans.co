@@ -3,7 +3,6 @@ import { connectDatabase } from "@/backend/config/db";
 import { User } from "@/backend/models";
 import { successResponse, errorResponse } from "@/backend/utils/apiResponse";
 import { SignJWT } from "jose";
-import { cookies } from "next/headers";
 
 const getJwtSecretKey = () => {
   const secret = process.env.JWT_SECRET || "bjeans-secret-key-fallback";
@@ -50,9 +49,8 @@ export async function POST(request: Request) {
       .setExpirationTime("7d") // 1 week
       .sign(getJwtSecretKey());
 
-    // Set cookie
-    const cookieStore = await cookies();
-    cookieStore.set("auth_token", token, {
+    const response = successResponse({ user: userObj }, 200);
+    response.cookies.set("auth_token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -60,7 +58,7 @@ export async function POST(request: Request) {
       path: "/",
     });
 
-    return successResponse({ user: userObj }, 200);
+    return response;
   } catch (error: any) {
     return errorResponse(error.message, 500);
   }
