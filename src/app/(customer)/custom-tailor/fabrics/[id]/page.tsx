@@ -84,7 +84,7 @@ export default function FabricDetailPage() {
   useEffect(() => {
     async function fetchUser() {
       try {
-        const res = await fetch("/api/auth/me");
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           const userId = data.data?.user?._id;

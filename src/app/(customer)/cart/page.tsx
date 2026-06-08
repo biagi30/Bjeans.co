@@ -56,7 +56,7 @@ export default function CartPage() {
       // Determine per-user cart key
       let key = "bjeans_cart_guest";
       try {
-        const res = await fetch("/api/auth/me");
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           const userId = data.data?.user?._id;

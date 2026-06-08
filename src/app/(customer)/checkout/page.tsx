@@ -67,7 +67,7 @@ export default function CheckoutPage() {
 
     const initCheckout = async () => {
       try {
-        const res = await fetch("/api/auth/me");
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
         if (!res.ok) {
           router.push("/login");
           return;
@@ -293,7 +293,7 @@ export default function CheckoutPage() {
 
         if (!tokenRes.ok) {
           const errData = await tokenRes.json().catch(() => ({}));
-          throw new Error(errData.error || "Gagal mendapatkan token pembayaran dari Midtrans.");
+          throw new Error(errData.message || errData.error || "Gagal mendapatkan token pembayaran dari Midtrans.");
         }
 
         const tokenJson = await tokenRes.json();

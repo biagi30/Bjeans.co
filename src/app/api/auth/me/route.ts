@@ -15,7 +15,11 @@ export async function GET() {
     const token = cookieStore.get("auth_token")?.value;
 
     if (!token) {
-      return errorResponse("Not authenticated", 401);
+      const response = errorResponse("Not authenticated", 401);
+      response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+      response.headers.set("Pragma", "no-cache");
+      response.headers.set("Expires", "0");
+      return response;
     }
 
     const verified = await jwtVerify(token, getJwtSecretKey());
@@ -26,12 +30,22 @@ export async function GET() {
     const user = await User.findById(payload.id).select("-password -__v");
 
     if (!user) {
-      return errorResponse("User not found", 404);
+      const response = errorResponse("User not found", 404);
+      response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+      return response;
     }
 
-    return successResponse({ user }, 200);
+    const response = successResponse({ user }, 200);
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    response.headers.set("Pragma", "no-cache");
+    response.headers.set("Expires", "0");
+    return response;
   } catch (error: any) {
-    return errorResponse("Authentication failed", 401);
+    const response = errorResponse("Authentication failed", 401);
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    response.headers.set("Pragma", "no-cache");
+    response.headers.set("Expires", "0");
+    return response;
   }
 }
 
