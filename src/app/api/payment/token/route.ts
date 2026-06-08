@@ -21,18 +21,17 @@ export async function POST(request: Request) {
       }
     }
 
+    // Check server key is configured
+    const serverKey = process.env.MIDTRANS_SERVER_KEY || "";
+    if (!serverKey) {
+      console.error("MIDTRANS_SERVER_KEY is not configured in environment variables");
+      return errorResponse("Payment gateway is not configured. Please contact support.", 500);
+    }
+
     // Retrieve orders from DB
     const orders = await Order.find({ _id: { $in: orderIds } }).populate("customer");
     if (orders.length === 0) {
       return errorResponse("No orders found for the given IDs", 404);
-    }
-
-    // Calculate total amount
-    const ordersSubtotal = orders.reduce((sum, order) => sum + order.totalAmount, 0);
-    const grossAmount = ordersSubtotal + Number(shippingFee) + Number(serviceFee);
-
-    if (grossAmount <= 0) {
-      return errorResponse("Invalid transaction total amount", 400);
     }
 
     // Get customer details from the first order
@@ -46,38 +45,47 @@ export async function POST(request: Request) {
     const firstName = nameParts[0];
     const lastName = nameParts.slice(1).join(" ") || "";
 
-    // Build item details for Midtrans receipt
+    // Build item details for Midtrans receipt — all prices MUST be integers
     const itemDetails: any[] = [];
     orders.forEach((order) => {
       order.items.forEach((item: any, idx: number) => {
         itemDetails.push({
           id: item.product ? item.product.toString() : `custom-${order._id}-${idx}`,
-          price: item.unitPrice,
+          price: Math.round(item.unitPrice),
           quantity: item.quantity,
           name: item.name.substring(0, 50),
         });
       });
     });
 
-    if (shippingFee > 0) {
+    const roundedShippingFee = Math.round(Number(shippingFee));
+    const roundedServiceFee = Math.round(Number(serviceFee));
+
+    if (roundedShippingFee > 0) {
       itemDetails.push({
         id: "shipping-fee",
-        price: Number(shippingFee),
+        price: roundedShippingFee,
         quantity: 1,
         name: "Ongkos Kirim",
       });
     }
 
-    if (serviceFee > 0) {
+    if (roundedServiceFee > 0) {
       itemDetails.push({
         id: "service-fee",
-        price: Number(serviceFee),
+        price: roundedServiceFee,
         quantity: 1,
         name: "Biaya Layanan & Admin",
       });
     }
 
-    const serverKey = process.env.MIDTRANS_SERVER_KEY || "";
+    // Midtrans requires gross_amount to EXACTLY equal the sum of (price * quantity) of all item_details
+    const grossAmount = itemDetails.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    if (grossAmount <= 0) {
+      return errorResponse("Invalid transaction total amount", 400);
+    }
+
     const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "";
     const isProduction = process.env.NODE_ENV === "production" && !clientKey.startsWith("SB-");
     const midtransUrl = isProduction
@@ -86,9 +94,13 @@ export async function POST(request: Request) {
 
     const authHeader = `Basic ${Buffer.from(serverKey + ":").toString("base64")}`;
 
+    // Add timestamp suffix to order_id to prevent Midtrans duplicate order_id rejection
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const midtransOrderId = `${orderIds.join("-")}-${timestamp}`;
+
     const midtransPayload = {
       transaction_details: {
-        order_id: orderIds.join("-"),
+        order_id: midtransOrderId,
         gross_amount: grossAmount,
       },
       item_details: itemDetails,
@@ -103,6 +115,10 @@ export async function POST(request: Request) {
       },
     };
 
+    console.log("Midtrans request payload:", JSON.stringify(midtransPayload, null, 2));
+    console.log("Midtrans URL:", midtransUrl);
+    console.log("Is production:", isProduction);
+
     const response = await fetch(midtransUrl, {
       method: "POST",
       headers: {
@@ -116,8 +132,12 @@ export async function POST(request: Request) {
     const responseData = await response.json();
 
     if (!response.ok) {
-      console.error("Midtrans API Error response:", responseData);
-      return errorResponse(responseData.error_messages?.[0] || "Failed to communicate with Midtrans", 500);
+      console.error("Midtrans API Error response:", JSON.stringify(responseData, null, 2));
+      console.error("Midtrans API status:", response.status);
+      const errorMsg = responseData.error_messages
+        ? responseData.error_messages.join(", ")
+        : "Failed to communicate with Midtrans";
+      return errorResponse(errorMsg, 500);
     }
 
     return successResponse({

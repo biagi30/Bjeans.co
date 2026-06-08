@@ -40,8 +40,10 @@ export async function POST(request: Request) {
 
     console.log(`Payment notification received for order_id: ${order_id}, status: ${transaction_status}`);
 
-    // Parse order IDs
-    const orderIds = order_id.split("-");
+    // Parse order IDs — extract valid 24-char hex MongoDB ObjectIds from the order_id string
+    // The order_id format is: "<objectId1>-<objectId2>-<timestamp>" 
+    const allParts = String(order_id).split("-");
+    const orderIds = allParts.filter((part: string) => /^[0-9a-fA-F]{24}$/.test(part));
 
     // Process payment status transitions
     let paymentStatus: "unpaid" | "paid" | "refunded" = "unpaid";
