@@ -9,7 +9,7 @@ export const landingImages = {
   productThree:
     "https://images.unsplash.com/photo-1721637286605-ae9be19d681f?auto=format&fit=crop&w=1200&q=80",
   craft:
-    "https://images.unsplash.com/photo-1640336437338-5c36f7e1115f?auto=format&fit=crop&w=1400&q=80",
+    "/images/faded_denim.png",
   press:
     "https://images.unsplash.com/photo-1531169509526-f8f1fdaa4a67?auto=format&fit=crop&w=1200&q=80",
   customTailor:
