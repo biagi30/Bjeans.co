@@ -7,7 +7,7 @@ const getJwtSecretKey = () => {
   return new TextEncoder().encode(secret);
 };
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Routes to protect and their allowed roles
   const pathname = request.nextUrl.pathname;
   
