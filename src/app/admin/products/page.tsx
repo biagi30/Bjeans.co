@@ -8,6 +8,7 @@ import { getThemeColors } from '../theme';
 import { ThemeToggle } from '@/core/components/shared/ThemeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/core/context/ToastContext';
+import { resizeAndCropImage } from '@/core/lib/utils';
 
 interface Product {
   _id: string;
@@ -80,7 +81,7 @@ export default function AdminProducts() {
 
   const parseImages = (value: string) =>
     value
-      .split(',')
+      .split(/(?<!base64),/)
       .map((item) => item.trim())
       .filter(Boolean);
 
@@ -100,8 +101,16 @@ export default function AdminProducts() {
       const uploadedUrls: string[] = [];
 
       for (const file of uploads) {
+        let processedFile: File | Blob = file;
+        try {
+          const resizedBlob = await resizeAndCropImage(file);
+          processedFile = new File([resizedBlob], file.name || "image.jpg", { type: 'image/jpeg' });
+        } catch (e) {
+          console.warn('Client-side resize failed, using original file:', e);
+        }
+
         const form = new FormData();
-        form.append('file', file);
+        form.append('file', processedFile);
 
         const res = await fetch('/api/uploads', {
           method: 'POST',

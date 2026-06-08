@@ -9,6 +9,7 @@ import { ThemeToggle } from '@/core/components/shared/ThemeToggle';
 import Link from 'next/link';
 import type { Material } from '@/api/models';
 import { useToast } from '@/core/context/ToastContext';
+import { resizeAndCropImage } from '@/core/lib/utils';
 
 export default function AdminMaterials() {
   const router = useRouter();
@@ -68,8 +69,16 @@ export default function AdminMaterials() {
       const uploadedUrls: string[] = [];
 
       for (const file of uploads) {
+        let processedFile: File | Blob = file;
+        try {
+          const resizedBlob = await resizeAndCropImage(file);
+          processedFile = new File([resizedBlob], file.name || "image.jpg", { type: 'image/jpeg' });
+        } catch (e) {
+          console.warn('Client-side resize failed, using original file:', e);
+        }
+
         const form = new FormData();
-        form.append('file', file);
+        form.append('file', processedFile);
 
         const res = await fetch('/api/uploads', {
           method: 'POST',
