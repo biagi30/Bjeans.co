@@ -28,8 +28,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "";
-  const isProduction = process.env.NODE_ENV === "production" && !clientKey.startsWith("SB-");
+  const clientKey = (process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "").trim();
+  const midtransMode = (process.env.MIDTRANS_MODE || process.env.NEXT_PUBLIC_MIDTRANS_MODE || "").trim().toLowerCase();
+  
+  const isProduction = midtransMode === "production"
+    ? true
+    : midtransMode === "sandbox"
+      ? false
+      : (process.env.NODE_ENV === "production" && !clientKey.startsWith("SB-"));
   const snapUrl = isProduction
     ? "https://app.midtrans.com/snap/snap.js"
     : "https://app.sandbox.midtrans.com/snap/snap.js";
