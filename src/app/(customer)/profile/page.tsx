@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { 
   User, Mail, Phone, MapPin, LogOut, Edit2, X, 
   Package, Clock, Truck, CheckCircle2, ChevronDown, ChevronUp, 
-  CreditCard, ClipboardList, ShoppingBag, Lock 
+  CreditCard, ClipboardList, ShoppingBag, Lock, LayoutDashboard
 } from "lucide-react";
 import { Button } from "@/core/components/shared/Button";
 import { useToast } from "@/core/context/ToastContext";
@@ -362,9 +362,16 @@ export default function ProfilePage() {
               </div>
 
               <div className="mt-10 border-t border-border/50 pt-8 flex justify-between items-center flex-wrap gap-4">
-                <Button variant="outline" onClick={() => setIsPasswordModalOpen(true)} startIcon={<Lock size={16} />} className="text-primary border-primary/30 hover:bg-primary/10">
-                  Ganti Kata Sandi
-                </Button>
+                <div className="flex gap-3 flex-wrap">
+                  <Button variant="outline" onClick={() => setIsPasswordModalOpen(true)} startIcon={<Lock size={16} />} className="text-primary border-primary/30 hover:bg-primary/10">
+                    Ganti Kata Sandi
+                  </Button>
+                  {user.role === "admin" && (
+                    <Button variant="primary" onClick={() => router.push("/admin/dashboard")} startIcon={<LayoutDashboard size={16} />}>
+                      Dashboard Admin
+                    </Button>
+                  )}
+                </div>
                 <Button variant="outline" onClick={handleLogout} startIcon={<LogOut size={16} />} className="text-red-500 border-red-500/30 hover:bg-red-500/10">
                   Keluar (Logout)
                 </Button>

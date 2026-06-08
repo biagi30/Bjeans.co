@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { User, ShoppingBag, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/core/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -17,6 +17,24 @@ const navLinks = [
 export function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    async function checkUser() {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.data?.user?.role === "admin") {
+            setIsAdmin(true);
+          }
+        }
+      } catch (err) {
+        // fail silently
+      }
+    }
+    checkUser();
+  }, []);
 
   return (
     <header className="glass-panel fixed left-0 right-0 top-0 z-50 border-b border-border/50">
@@ -42,6 +60,14 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
+          {isAdmin && (
+            <Link
+              href="/admin/dashboard"
+              className="text-sm font-semibold text-primary transition-colors hover:text-primary/80"
+            >
+              Dashboard Admin
+            </Link>
+          )}
         </nav>
 
         {/* Right Actions */}
@@ -95,6 +121,15 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
+            {isAdmin && (
+              <Link
+                href="/admin/dashboard"
+                onClick={() => setMobileOpen(false)}
+                className="rounded-lg px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/10 transition-colors"
+              >
+                Dashboard Admin
+              </Link>
+            )}
           </div>
         </nav>
       )}
