@@ -42,9 +42,9 @@ export default function LoginForm() {
         const redirect = params.get("redirect");
         
         if (userRole === "admin") {
-          router.push(redirect || "/admin/dashboard");
+          window.location.href = redirect || "/admin/dashboard";
         } else {
-          router.push(redirect || "/");
+          window.location.href = redirect || "/";
         }
       } else {
         setError(data.error || "Login failed");
