@@ -6,6 +6,7 @@ export async function GET() {
     timestamp: new Date().toISOString(),
     env: {
       NODE_ENV: process.env.NODE_ENV,
+      MIDTRANS_MODE: process.env.MIDTRANS_MODE,
     },
     database: {
       status: "unknown",
@@ -60,7 +61,12 @@ export async function GET() {
   if (!serverKey) {
     diagnostics.midtrans_test.response = "Cannot test: MIDTRANS_SERVER_KEY is missing";
   } else {
-    const isProduction = process.env.NODE_ENV === "production" && !clientKey.startsWith("SB-");
+    const midtransMode = (process.env.MIDTRANS_MODE || "").trim().toLowerCase();
+    const isProduction = midtransMode === "production"
+      ? true
+      : midtransMode === "sandbox"
+        ? false
+        : (process.env.NODE_ENV === "production" && !clientKey.startsWith("SB-"));
     const midtransUrl = isProduction
       ? "https://app.midtrans.com/snap/v1/transactions"
       : "https://app.sandbox.midtrans.com/snap/v1/transactions";

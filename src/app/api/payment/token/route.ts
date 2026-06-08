@@ -87,7 +87,12 @@ export async function POST(request: Request) {
     }
 
     const clientKey = (process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "").trim();
-    const isProduction = process.env.NODE_ENV === "production" && !clientKey.startsWith("SB-");
+    const midtransMode = (process.env.MIDTRANS_MODE || "").trim().toLowerCase();
+    const isProduction = midtransMode === "production"
+      ? true
+      : midtransMode === "sandbox"
+        ? false
+        : (process.env.NODE_ENV === "production" && !clientKey.startsWith("SB-"));
     const midtransUrl = isProduction
       ? "https://app.midtrans.com/snap/v1/transactions"
       : "https://app.sandbox.midtrans.com/snap/v1/transactions";
