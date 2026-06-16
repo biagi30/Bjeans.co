@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { Container, SectionHeader } from "@/core/components/shared";
 import { sizeGuideData } from "@/core/data/landing.data";
-import { cn } from "@/core/lib/utils";
+import { cn, getFitImage } from "@/core/lib/utils";
 import { useToast } from "@/core/context/ToastContext";
 import type { Material } from "@/api/models";
 import type { CustomOption } from "@/api/models";
@@ -340,9 +340,9 @@ export default function CustomTailorPage() {
                     )}
                   >
                     <div className="relative h-60 overflow-hidden bg-muted">
-                      {fit.image ? (
+                      {getFitImage(fit) ? (
                         <Image
-                          src={fit.image}
+                          src={getFitImage(fit)}
                           alt={fit.name}
                           fill
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -500,8 +500,8 @@ export default function CustomTailorPage() {
                     <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Potongan Jeans (Langkah 2)</p>
                     <div className="flex gap-3 items-center">
                       <div className="relative h-12 w-12 rounded-lg overflow-hidden shrink-0 bg-muted">
-                        {selectedFit.image ? (
-                          <Image src={selectedFit.image} alt={selectedFit.name} fill className="object-cover" />
+                        {getFitImage(selectedFit) ? (
+                          <Image src={getFitImage(selectedFit)} alt={selectedFit.name} fill className="object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground">No Image</div>
                         )}
