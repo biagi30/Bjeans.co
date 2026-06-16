@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Eye, Loader2 } from 'lucide-react';
+import { ArrowLeft, Eye, Loader2, Search, ShoppingBag } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
@@ -50,7 +50,10 @@ export default function AdminCustomOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [statusTab, setStatusTab] = useState('all');
+  const [mounted, setMounted] = useState(false);
 
   const neumorph = {
     boxShadow: `
@@ -71,7 +74,7 @@ export default function AdminCustomOrders() {
   };
 
   useEffect(() => {
-    
+    setMounted(true);
     fetchOrders();
   }, [router]);
 
@@ -138,9 +141,277 @@ export default function AdminCustomOrders() {
     }
   };
 
-  const filteredOrders = filterStatus === 'all'
-    ? orders
-    : orders.filter(order => order.status === filterStatus);
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!window.confirm("Apakah Anda yakin ingin menghapus pesanan ini secara permanen? Tindakan ini tidak dapat dibatalkan.")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setOrders(orders.filter(order => order._id !== orderId));
+        toast.success("Pesanan berhasil dihapus");
+        setSelectedOrder(null);
+      } else {
+        toast.error(data.message || 'Gagal menghapus pesanan');
+      }
+    } catch (err) {
+      toast.error('Gagal menghubungi server');
+    }
+  };
+
+  const isToday = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  };
+
+  const sortedFilteredOrders = [...orders]
+    .filter(order => {
+      // 1. Status Tab Filter
+      if (statusTab === 'unpaid' && order.status !== 'waiting_payment') {
+        return false;
+      }
+      if (statusTab === 'processing' && order.status !== 'processing' && order.status !== 'shipped') {
+        return false;
+      }
+      if (statusTab === 'completed' && order.status !== 'done') {
+        return false;
+      }
+
+      // 2. Date Filter
+      if (dateFilter === 'today' && !isToday(order.createdAt)) {
+        return false;
+      }
+
+      // 3. Search Query
+      if (searchQuery.trim() !== '') {
+        const q = searchQuery.toLowerCase().trim();
+        const idMatch = order._id.toLowerCase().includes(q) || 
+                        (order.orderNumber && order.orderNumber.toLowerCase().includes(q)) ||
+                        `#${order._id.substring(order._id.length - 6)}`.toLowerCase().includes(q);
+        const nameMatch = order.customer?.name?.toLowerCase().includes(q);
+        const emailMatch = order.customer?.email?.toLowerCase().includes(q);
+        return idMatch || nameMatch || emailMatch;
+      }
+
+      return true;
+    })
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  const todayOrders = sortedFilteredOrders.filter(order => isToday(order.createdAt));
+  const olderOrders = sortedFilteredOrders.filter(order => !isToday(order.createdAt));
+
+  const renderOrdersTable = (ordersList: Order[], title: string, initialDelay: number = 0.5) => {
+    return (
+      <div className="space-y-4">
+        <h2 
+          className="text-lg tracking-wider uppercase font-semibold pl-2"
+          style={{
+            fontFamily: 'var(--font-space), sans-serif',
+            color: colors.text
+          }}
+        >
+          {title} ({ordersList.length})
+        </h2>
+        <motion.div
+          className="rounded-2xl overflow-x-auto"
+          style={{
+            backgroundColor: colors.bgSecondary,
+            ...neumorph
+          }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: initialDelay }}
+        >
+          {ordersList.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground" style={{ fontFamily: 'var(--font-space), sans-serif' }}>
+              Tidak ada pesanan di kategori ini.
+            </div>
+          ) : (
+            <table className="w-full min-w-[900px]">
+              <thead style={{ backgroundColor: colors.bg }}>
+                <tr>
+                  <th
+                    className="px-6 py-4 text-left"
+                    style={{
+                      fontFamily: 'var(--font-space), sans-serif',
+                      fontWeight: 800,
+                      fontSize: '13px',
+                      letterSpacing: '0.5px',
+                      color: colors.text
+                    }}
+                  >
+                    ORDER ID
+                  </th>
+                  <th
+                    className="px-6 py-4 text-left"
+                    style={{
+                      fontFamily: 'var(--font-space), sans-serif',
+                      fontWeight: 800,
+                      fontSize: '13px',
+                      letterSpacing: '0.5px',
+                      color: colors.text
+                    }}
+                  >
+                    CUSTOMER
+                  </th>
+                  <th
+                    className="px-6 py-4 text-left"
+                    style={{
+                      fontFamily: 'var(--font-space), sans-serif',
+                      fontWeight: 800,
+                      fontSize: '13px',
+                      letterSpacing: '0.5px',
+                      color: colors.text
+                    }}
+                  >
+                    DATE
+                  </th>
+                  <th
+                    className="px-6 py-4 text-left"
+                    style={{
+                      fontFamily: 'var(--font-space), sans-serif',
+                      fontWeight: 800,
+                      fontSize: '13px',
+                      letterSpacing: '0.5px',
+                      color: colors.text
+                    }}
+                  >
+                    TOTAL
+                  </th>
+                  <th
+                    className="px-6 py-4 text-left"
+                    style={{
+                      fontFamily: 'var(--font-space), sans-serif',
+                      fontWeight: 800,
+                      fontSize: '13px',
+                      letterSpacing: '0.5px',
+                      color: colors.text
+                    }}
+                  >
+                    STATUS
+                  </th>
+                  <th
+                    className="px-6 py-4 text-left"
+                    style={{
+                      fontFamily: 'var(--font-space), sans-serif',
+                      fontWeight: 800,
+                      fontSize: '13px',
+                      letterSpacing: '0.5px',
+                      color: colors.text
+                    }}
+                  >
+                    ACTIONS
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {ordersList.map((order, index) => (
+                  <motion.tr
+                    key={order._id}
+                    style={{
+                      borderTop: `1px solid ${colors.border}`
+                    }}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: initialDelay + index * 0.05 }}
+                    whileHover={{ backgroundColor: `${colors.bg}80` }}
+                  >
+                    <td
+                      className="px-6 py-4"
+                      style={{
+                        fontFamily: 'var(--font-space), sans-serif',
+                        fontWeight: 700,
+                        fontSize: '14px',
+                        color: colors.text
+                      }}
+                    >
+                      {order.orderNumber || `#${order._id.substring(order._id.length - 6).toUpperCase()}`}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div>
+                        <p
+                          style={{
+                            fontFamily: 'var(--font-space), sans-serif',
+                            fontWeight: 600,
+                            fontSize: '14px',
+                            color: colors.text
+                          }}
+                        >
+                          {order.customer?.name || "Guest User"}
+                        </p>
+                        <p
+                          style={{
+                            fontFamily: 'var(--font-space), sans-serif',
+                            fontWeight: 500,
+                            fontSize: '12px',
+                            color: colors.textSecondary
+                          }}
+                        >
+                          {order.customer?.email || "No email"}
+                        </p>
+                      </div>
+                    </td>
+                    <td
+                      className="px-6 py-4"
+                      style={{
+                        fontFamily: 'var(--font-space), sans-serif',
+                        fontWeight: 500,
+                        fontSize: '14px',
+                        color: colors.textSecondary
+                      }}
+                    >
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </td>
+                    <td
+                      className="px-6 py-4"
+                      style={{
+                        fontFamily: 'var(--font-space), sans-serif',
+                        fontWeight: 600,
+                        fontSize: '14px',
+                        color: colors.text
+                      }}
+                    >
+                      Rp{order.totalAmount?.toLocaleString('id-ID')}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className="px-3 py-1 rounded-full text-xs tracking-wider"
+                        style={{
+                          fontFamily: 'var(--font-space), sans-serif',
+                          fontWeight: 700,
+                          backgroundColor: `${getStatusColor(order.status)}20`,
+                          color: getStatusColor(order.status)
+                        }}
+                      >
+                        {getStatusLabel(order.status)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <motion.button
+                        onClick={() => setSelectedOrder(order)}
+                        style={{ color: colors.accent }}
+                        whileHover={{ scale: 1.2, rotate: 5 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <Eye size={18} />
+                      </motion.button>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </motion.div>
+      </div>
+    );
+  };
+
+  if (!mounted) return null;
 
   return (
     <motion.div
@@ -181,30 +452,6 @@ export default function AdminCustomOrders() {
 
             <div className="flex items-center gap-4">
               <ThemeToggle />
-              <motion.select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-4 py-2 rounded-xl outline-none transition-all duration-300"
-                style={{
-                  fontFamily: 'var(--font-space), sans-serif',
-                  fontWeight: 600,
-                  fontSize: '13px',
-                  backgroundColor: colors.bgSecondary,
-                  color: colors.text,
-                  border: `2px solid ${colors.border}`,
-                  ...neumorphInset
-                }}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                whileHover={{ scale: 1.02 }}
-              >
-                <option value="all" style={{ backgroundColor: colors.bgSecondary }}>ALL ORDERS</option>
-                <option value="waiting_payment" style={{ backgroundColor: colors.bgSecondary }}>WAITING PAYMENT</option>
-                <option value="processing" style={{ backgroundColor: colors.bgSecondary }}>IN PRODUCTION</option>
-                <option value="shipped" style={{ backgroundColor: colors.bgSecondary }}>READY</option>
-                <option value="done" style={{ backgroundColor: colors.bgSecondary }}>COMPLETED</option>
-              </motion.select>
             </div>
           </div>
         </div>
@@ -352,201 +599,143 @@ export default function AdminCustomOrders() {
             </motion.div>
           </div>
 
-          {/* Orders Table */}
-          <motion.div
-            className="rounded-2xl overflow-x-auto"
-            style={{
-              backgroundColor: colors.bgSecondary,
-              ...neumorph
-            }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-          >
-            {loading ? (
-              <div className="p-12 flex justify-center items-center gap-3 text-muted-foreground">
-                <Loader2 className="animate-spin" /> Loading custom orders...
-              </div>
-            ) : filteredOrders.length === 0 ? (
-              <div className="p-12 text-center text-muted-foreground">
-                No custom orders found.
-              </div>
-            ) : (
-              <table className="w-full min-w-[900px]">
-                <thead style={{ backgroundColor: colors.bg }}>
-                  <tr>
-                    <th
-                      className="px-6 py-4 text-left"
-                      style={{
-                        fontFamily: 'var(--font-space), sans-serif',
-                        fontWeight: 800,
-                        fontSize: '13px',
-                        letterSpacing: '0.5px',
-                        color: colors.text
-                      }}
-                    >
-                      ORDER ID
-                    </th>
-                    <th
-                      className="px-6 py-4 text-left"
-                      style={{
-                        fontFamily: 'var(--font-space), sans-serif',
-                        fontWeight: 800,
-                        fontSize: '13px',
-                        letterSpacing: '0.5px',
-                        color: colors.text
-                      }}
-                    >
-                      CUSTOMER
-                    </th>
-                    <th
-                      className="px-6 py-4 text-left"
-                      style={{
-                        fontFamily: 'var(--font-space), sans-serif',
-                        fontWeight: 800,
-                        fontSize: '13px',
-                        letterSpacing: '0.5px',
-                        color: colors.text
-                      }}
-                    >
-                      DATE
-                    </th>
-                    <th
-                      className="px-6 py-4 text-left"
-                      style={{
-                        fontFamily: 'var(--font-space), sans-serif',
-                        fontWeight: 800,
-                        fontSize: '13px',
-                        letterSpacing: '0.5px',
-                        color: colors.text
-                      }}
-                    >
-                      TOTAL
-                    </th>
-                    <th
-                      className="px-6 py-4 text-left"
-                      style={{
-                        fontFamily: 'var(--font-space), sans-serif',
-                        fontWeight: 800,
-                        fontSize: '13px',
-                        letterSpacing: '0.5px',
-                        color: colors.text
-                      }}
-                    >
-                      STATUS
-                    </th>
-                    <th
-                      className="px-6 py-4 text-left"
-                      style={{
-                        fontFamily: 'var(--font-space), sans-serif',
-                        fontWeight: 800,
-                        fontSize: '13px',
-                        letterSpacing: '0.5px',
-                        color: colors.text
-                      }}
-                    >
-                      ACTIONS
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredOrders.map((order, index) => (
-                    <motion.tr
-                      key={order._id}
-                      style={{
-                        borderTop: `1px solid ${colors.border}`
-                      }}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4, delay: 0.6 + index * 0.05 }}
-                      whileHover={{ backgroundColor: `${colors.bg}80` }}
-                    >
-                      <td
-                        className="px-6 py-4"
-                        style={{
-                          fontFamily: 'var(--font-space), sans-serif',
-                          fontWeight: 700,
-                          fontSize: '14px',
-                          color: colors.text
-                        }}
-                      >
-                        {order.orderNumber || `#${order._id.substring(order._id.length - 6).toUpperCase()}`}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div>
-                          <p
-                            style={{
-                              fontFamily: 'var(--font-space), sans-serif',
-                              fontWeight: 600,
-                              fontSize: '14px',
-                              color: colors.text
-                            }}
-                          >
-                            {order.customer?.name || "Guest User"}
-                          </p>
-                          <p
-                            style={{
-                              fontFamily: 'var(--font-space), sans-serif',
-                              fontWeight: 500,
-                              fontSize: '12px',
-                              color: colors.textSecondary
-                            }}
-                          >
-                            {order.customer?.email || "No email"}
-                          </p>
-                        </div>
-                      </td>
-                      <td
-                        className="px-6 py-4"
-                        style={{
-                          fontFamily: 'var(--font-space), sans-serif',
-                          fontWeight: 500,
-                          fontSize: '14px',
-                          color: colors.textSecondary
-                        }}
-                      >
-                        {new Date(order.createdAt).toLocaleDateString()}
-                      </td>
-                      <td
-                        className="px-6 py-4"
-                        style={{
-                          fontFamily: 'var(--font-space), sans-serif',
-                          fontWeight: 600,
-                          fontSize: '14px',
-                          color: colors.text
-                        }}
-                      >
-                        Rp{order.totalAmount?.toLocaleString('id-ID')}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className="px-3 py-1 rounded-full text-xs tracking-wider"
-                          style={{
-                            fontFamily: 'var(--font-space), sans-serif',
-                            fontWeight: 700,
-                            backgroundColor: `${getStatusColor(order.status)}20`,
-                            color: getStatusColor(order.status)
-                          }}
-                        >
-                          {getStatusLabel(order.status)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <motion.button
-                          onClick={() => setSelectedOrder(order)}
-                          style={{ color: colors.accent }}
-                          whileHover={{ scale: 1.2, rotate: 5 }}
-                          whileTap={{ scale: 0.9 }}
-                        >
-                          <Eye size={18} />
-                        </motion.button>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </motion.div>
+          {/* Controls Panel */}
+          <div className="flex flex-col lg:flex-row gap-6 mb-8 items-stretch justify-between">
+            {/* Search Bar */}
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari berdasarkan Order ID, nama, atau email..."
+                className="w-full pl-12 pr-4 py-3.5 rounded-2xl outline-none transition-all duration-300 border-none"
+                style={{
+                  fontFamily: 'var(--font-space), sans-serif',
+                  fontSize: '14px',
+                  backgroundColor: colors.bgSecondary,
+                  color: colors.text,
+                  ...neumorphInset
+                }}
+              />
+              <Search
+                className="absolute left-4 top-1/2 -translate-y-1/2"
+                size={20}
+                style={{ color: colors.textSecondary }}
+              />
+            </div>
+
+            {/* Date Filters */}
+            <div 
+              className="flex items-center p-1.5 rounded-2xl gap-1 overflow-x-auto"
+              style={{
+                backgroundColor: colors.bgSecondary,
+                ...neumorph
+              }}
+            >
+              {[
+                { id: 'all', label: 'SEMUA TANGGAL' },
+                { id: 'today', label: 'HARI INI' }
+              ].map((filter) => (
+                <button
+                  key={filter.id}
+                  onClick={() => setDateFilter(filter.id)}
+                  className="px-4 py-2.5 rounded-xl text-xs tracking-wider transition-all duration-300 font-bold uppercase whitespace-nowrap"
+                  style={{
+                    fontFamily: 'var(--font-space), sans-serif',
+                    backgroundColor: dateFilter === filter.id ? colors.accent : 'transparent',
+                    color: dateFilter === filter.id ? '#ffffff' : colors.textSecondary,
+                  }}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Status Tabs */}
+          <div className="flex border-b mb-8 gap-8 overflow-x-auto" style={{ borderColor: colors.border }}>
+            {[
+              { id: 'all', label: 'Semua Pesanan', count: orders.length },
+              { id: 'unpaid', label: 'Belum Bayar', count: orders.filter(o => o.status === 'waiting_payment').length },
+              { id: 'processing', label: 'Sedang Diproses', count: orders.filter(o => o.status === 'processing' || o.status === 'shipped').length },
+              { id: 'completed', label: 'Selesai', count: orders.filter(o => o.status === 'done').length }
+            ].map((tab) => {
+              const isActive = statusTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setStatusTab(tab.id)}
+                  className="pb-4 relative text-sm tracking-wider font-semibold uppercase flex items-center gap-2 transition-all duration-300 whitespace-nowrap"
+                  style={{
+                    fontFamily: 'var(--font-space), sans-serif',
+                    color: isActive ? colors.accent : colors.textSecondary,
+                  }}
+                >
+                  {tab.label}
+                  <span 
+                    className="text-[10px] px-2 py-0.5 rounded-full font-bold transition-all duration-300"
+                    style={{
+                      backgroundColor: isActive ? `${colors.accent}20` : `${colors.border}`,
+                      color: isActive ? colors.accent : colors.textSecondary,
+                    }}
+                  >
+                    {tab.count}
+                  </span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeTabUnderline"
+                      className="absolute bottom-0 left-0 right-0 h-0.5"
+                      style={{ backgroundColor: colors.accent }}
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {loading ? (
+            <div className="p-12 flex justify-center items-center gap-3 text-muted-foreground">
+              <Loader2 className="animate-spin" /> Loading custom orders...
+            </div>
+          ) : sortedFilteredOrders.length === 0 ? (
+            <motion.div
+              className="text-center py-16 px-4 rounded-2xl"
+              style={{
+                backgroundColor: colors.bgSecondary,
+                ...neumorph
+              }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <ShoppingBag className="mx-auto mb-4 opacity-40" size={48} style={{ color: colors.textSecondary }} />
+              <p
+                style={{
+                  fontFamily: 'var(--font-space), sans-serif',
+                  fontWeight: 600,
+                  fontSize: '16px',
+                  color: colors.text
+                }}
+              >
+                Tidak ada pesanan custom yang cocok
+              </p>
+              <p
+                className="mt-1 text-sm"
+                style={{
+                  fontFamily: 'var(--font-space), sans-serif',
+                  color: colors.textSecondary
+                }}
+              >
+                Coba gunakan kata kunci lain atau ubah filter Anda.
+              </p>
+            </motion.div>
+          ) : (
+            <div className="space-y-12">
+              {todayOrders.length > 0 && renderOrdersTable(todayOrders, "PESANAN HARI INI", 0.3)}
+              {olderOrders.length > 0 && renderOrdersTable(olderOrders, "PESANAN SEBELUMNYA", 0.4)}
+            </div>
+          )}
         </div>
       </main>
 
@@ -856,7 +1045,24 @@ export default function AdminCustomOrders() {
               </div>
             </div>
             
-             <div className="flex justify-end mt-6">
+            <div className="flex justify-between items-center mt-6">
+               <motion.button
+                  onClick={() => handleDeleteOrder(selectedOrder._id)}
+                  className="px-6 py-3 rounded-xl transition-all duration-300"
+                  style={{
+                    fontFamily: 'var(--font-space), sans-serif',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    color: '#EF4444',
+                    backgroundColor: '#EF444415',
+                    border: '1px solid #EF4444'
+                  }}
+                  whileHover={{ scale: 1.02, backgroundColor: '#EF444425' }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  HAPUS PESANAN
+                </motion.button>
+
                <motion.button
                   onClick={() => setSelectedOrder(null)}
                   className="px-6 py-3 rounded-xl"
