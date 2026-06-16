@@ -9,8 +9,6 @@ import { Container, SectionHeader } from "@/core/components/shared";
 import {
   landingImages,
   landingBuilderSteps,
-  landingTestimonials,
-  landingOutlets,
 } from "@/core/data/landing.data";
 
 // Import tipe dan service API yang sama dengan halaman Toko
@@ -287,62 +285,7 @@ export default function Home() {
         </Container>
       </section>
 
-      {/* ─── Testimonials ──────────────────────────────────────── */}
-      <section className="bg-surface py-20 lg:py-24">
-        <Container className="space-y-10">
-          <SectionHeader
-            eyebrow="Pers + Cerita"
-            title="Cerita pers & klien terpilih."
-            description="Sekilas pandang mengapa editor mode dan pencinta denim memilih Bjeans.co."
-          />
-          <div className="flex flex-wrap gap-3">
-            {landingOutlets.map((name) => (
-              <span
-                key={name}
-                className="rounded-full border border-border bg-card px-5 py-2 text-xs font-semibold tracking-[0.3em]"
-              >
-                {name}
-              </span>
-            ))}
-          </div>
-          <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr_1fr]">
-            <div className="glass-card rounded-2xl p-6 flex flex-col justify-between">
-              <p className="text-sm text-muted-foreground italic">
-                &ldquo;{landingTestimonials[0].quote}&rdquo;
-              </p>
-              <div className="mt-4">
-                <p className="text-sm font-semibold">
-                  {landingTestimonials[0].name}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {landingTestimonials[0].role}
-                </p>
-              </div>
-            </div>
-            <div className="relative min-h-[220px] overflow-hidden rounded-2xl border border-border">
-              <Image
-                src={landingImages.press}
-                alt="Tekstur denim"
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="glass-card rounded-2xl p-6 flex flex-col justify-between">
-              <p className="text-sm text-muted-foreground italic">
-                &ldquo;{landingTestimonials[1].quote}&rdquo;
-              </p>
-              <div className="mt-4">
-                <p className="text-sm font-semibold">
-                  {landingTestimonials[1].name}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {landingTestimonials[1].role}
-                </p>
-              </div>
-            </div>
-          </div>
-        </Container>
-      </section>
+
 
       {/* ─── CTA Section ───────────────────────────────────────── */}
       <section className="py-20 lg:py-24">

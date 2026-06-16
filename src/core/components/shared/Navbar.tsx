@@ -76,7 +76,7 @@ export function Navbar() {
           <Link
             href="/profile"
             aria-label="Akun"
-            className="hidden h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground sm:flex"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
           >
             <User size={18} />
           </Link>
@@ -121,6 +121,18 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
+            <Link
+              href="/profile"
+              onClick={() => setMobileOpen(false)}
+              className={cn(
+                "rounded-lg px-3 py-2 text-sm transition-colors",
+                pathname === "/profile"
+                  ? "bg-primary/10 font-semibold text-foreground"
+                  : "text-muted-foreground hover:bg-muted"
+              )}
+            >
+              Profil Saya
+            </Link>
             {isAdmin && (
               <Link
                 href="/admin/dashboard"

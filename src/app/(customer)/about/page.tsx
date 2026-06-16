@@ -150,7 +150,7 @@ export default function AboutPage() {
               />
               <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                 <span className="rounded-full bg-white/90 px-6 py-3 text-sm font-semibold text-black">
-                  📍 Fashion District, Jakarta
+                  📍 Cicangkang Girang, Bandung
                 </span>
               </div>
             </div>
@@ -165,9 +165,9 @@ export default function AboutPage() {
                   <div>
                     <p className="font-semibold">Alamat</p>
                     <p className="text-sm text-muted-foreground">
-                      Jl. Fashion District No. 42
+                      Jl. Raya Cicangkang Girang No. 42
                       <br />
-                      Jakarta Selatan, Indonesia 12110
+                      Bandung, Jawa Barat, Indonesia 40551
                     </p>
                   </div>
                 </div>
@@ -178,7 +178,7 @@ export default function AboutPage() {
                   <div>
                     <p className="font-semibold">Telepon</p>
                     <p className="text-sm text-muted-foreground">
-                      +62 21 5555 0042
+                      +62 83829790300
                     </p>
                   </div>
                 </div>
@@ -189,7 +189,7 @@ export default function AboutPage() {
                   <div>
                     <p className="font-semibold">Email</p>
                     <p className="text-sm text-muted-foreground">
-                      hello@bjeans.co
+                      bjeans@gmail.com
                     </p>
                   </div>
                 </div>
