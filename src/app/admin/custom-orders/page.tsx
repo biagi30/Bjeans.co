@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Eye, Loader2, Search, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Eye, Loader2, Search, ShoppingBag, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
@@ -54,6 +54,7 @@ export default function AdminCustomOrders() {
   const [dateFilter, setDateFilter] = useState('all');
   const [statusTab, setStatusTab] = useState('all');
   const [mounted, setMounted] = useState(false);
+  const [deleteConfirmOrderId, setDeleteConfirmOrderId] = useState<string | null>(null);
 
   const neumorph = {
     boxShadow: `
@@ -142,10 +143,6 @@ export default function AdminCustomOrders() {
   };
 
   const handleDeleteOrder = async (orderId: string) => {
-    if (!window.confirm("Apakah Anda yakin ingin menghapus pesanan ini secara permanen? Tindakan ini tidak dapat dibatalkan.")) {
-      return;
-    }
-
     try {
       const res = await fetch(`/api/orders/${orderId}`, {
         method: 'DELETE',
@@ -1047,7 +1044,7 @@ export default function AdminCustomOrders() {
             
             <div className="flex justify-between items-center mt-6">
                <motion.button
-                  onClick={() => handleDeleteOrder(selectedOrder._id)}
+                  onClick={() => setDeleteConfirmOrderId(selectedOrder._id)}
                   className="px-6 py-3 rounded-xl transition-all duration-300"
                   style={{
                     fontFamily: 'var(--font-space), sans-serif',
@@ -1079,6 +1076,100 @@ export default function AdminCustomOrders() {
                   CLOSE
                 </motion.button>
             </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Custom Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteConfirmOrderId && (
+          <motion.div
+            className="fixed inset-0 flex items-center justify-center z-[60] p-4"
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.85)' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setDeleteConfirmOrderId(null)}
+          >
+            <motion.div
+              className="w-full max-w-md rounded-[24px] p-6 shadow-2xl flex flex-col items-center text-center space-y-6"
+              style={{
+                backgroundColor: colors.bgSecondary,
+                border: `1px solid ${colors.error}25`,
+                ...neumorph
+              }}
+              onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.9, y: 50 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 50 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div 
+                className="h-14 w-14 rounded-full flex items-center justify-center shadow-inner"
+                style={{
+                  backgroundColor: `${colors.error}15`,
+                  color: colors.error,
+                  border: `1px solid ${colors.error}30`
+                }}
+              >
+                <Trash2 size={28} />
+              </div>
+              
+              <div className="space-y-2">
+                <h3 
+                  className="text-xl font-bold tracking-tight"
+                  style={{
+                    fontFamily: 'var(--font-outfit), sans-serif',
+                    color: colors.text
+                  }}
+                >
+                  Hapus Pesanan Ini?
+                </h3>
+                <p 
+                  className="text-sm leading-relaxed"
+                  style={{
+                    fontFamily: 'var(--font-space), sans-serif',
+                    color: colors.textSecondary
+                  }}
+                >
+                  Apakah Anda yakin ingin menghapus pesanan ini secara permanen? Aksi ini akan menghapus seluruh data pesanan dari sistem dan tidak dapat dibatalkan.
+                </p>
+              </div>
+
+              <div className="flex w-full gap-3">
+                <motion.button
+                  type="button"
+                  onClick={() => setDeleteConfirmOrderId(null)}
+                  className="flex-1 py-3 text-xs font-bold rounded-xl transition-colors"
+                  style={{
+                    fontFamily: 'var(--font-space), sans-serif',
+                    backgroundColor: colors.bg,
+                    color: colors.textSecondary,
+                    border: `1px solid ${colors.border}`,
+                  }}
+                  whileHover={{ scale: 1.02, backgroundColor: colors.bgSecondary }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  BATAL
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    handleDeleteOrder(deleteConfirmOrderId);
+                    setDeleteConfirmOrderId(null);
+                  }}
+                  className="flex-1 py-3 text-xs font-bold text-white rounded-xl shadow-lg transition-colors"
+                  style={{
+                    fontFamily: 'var(--font-space), sans-serif',
+                    backgroundColor: colors.error,
+                  }}
+                  whileHover={{ scale: 1.02, backgroundColor: '#DC2626' }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  YA, HAPUS
+                </motion.button>
+              </div>
             </motion.div>
           </motion.div>
         )}
