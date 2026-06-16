@@ -67,40 +67,40 @@ export function resizeAndCropImage(file: File): Promise<Blob> {
   });
 }
 export function getFitImage(fit: { name: string; image?: string }) {
-  // If the image is a valid remote URL or a base64 string, use it
-  if (fit.image && (fit.image.startsWith("http") || fit.image.startsWith("data:"))) {
+  // If the image is a valid remote URL, local path, or base64 string, use it
+  if (fit.image && (fit.image.startsWith("/") || fit.image.startsWith("http") || fit.image.startsWith("data:"))) {
     return fit.image;
   }
   
-  // Otherwise, use fallback high-quality Unsplash URLs of real denim jeans based on the fit name
+  // Otherwise, use fallback local images of denim jeans based on the fit name
   const name = fit.name.toLowerCase();
   if (name.includes("slim")) {
-    return "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=600&q=80"; // Slim Fit (Hanging denim)
+    return "/images/slim_fit.png";
   }
   if (name.includes("regular")) {
-    return "https://images.unsplash.com/photo-1479064555552-3ef4979f8908?auto=format&fit=crop&w=600&q=80"; // Regular Fit (Folded denim)
+    return "/images/regular_fit.png";
   }
   if (name.includes("straight")) {
-    return "https://images.unsplash.com/photo-1582552938357-32b906df40cb?auto=format&fit=crop&w=600&q=80"; // Straight Cut (Flat texture denim)
+    return "/images/straight_cut.png";
   }
   if (name.includes("wide")) {
-    return "https://images.unsplash.com/photo-1604176354204-9268737828e4?auto=format&fit=crop&w=600&q=80"; // Wide Leg (Loose hanging denim)
+    return "/images/wide_leg.png";
   }
   if (name.includes("skinny")) {
-    return "https://images.unsplash.com/photo-1519961655809-34fc1568cd77?auto=format&fit=crop&w=600&q=80"; // Skinny Fit (Legs in slim/skinny denim)
+    return "/images/slim_fit.png";
   }
   if (name.includes("taper")) {
-    return "https://images.unsplash.com/photo-1640336437338-5c36f7e1115f?auto=format&fit=crop&w=600&q=80"; // Tapered (Hanging tapered denim)
+    return "/images/slim_fit.png";
   }
   if (name.includes("bootcut")) {
-    return "https://images.unsplash.com/photo-1532190370294-e81fe487b61a?auto=format&fit=crop&w=600&q=80"; // Bootcut (Back pocket denim pocket detail)
+    return "/images/regular_fit.png";
   }
   if (name.includes("relaxed")) {
-    return "https://images.unsplash.com/photo-1531169509526-f8f1fdaa4a67?auto=format&fit=crop&w=600&q=80"; // Relaxed (Legs sitting on ledge)
+    return "/images/regular_fit.png";
   }
   
-  // Default fallback if path is a broken relative one
-  return "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=600&q=80";
+  // Default fallback to straight cut
+  return "/images/straight_cut.png";
 }
 
 
