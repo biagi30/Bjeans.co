@@ -165,13 +165,13 @@ export default function CustomTailorPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && data.data?._id) {
-          setSavedProfileId(data.data._id);
-        }
-      })
-      .catch(err => console.error("Gagal menyimpan profil ukuran otomatis:", err));
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.data?._id) {
+            setSavedProfileId(data.data._id);
+          }
+        })
+        .catch(err => console.error("Gagal menyimpan profil ukuran otomatis:", err));
     }
 
     const stored = localStorage.getItem(cartKey);
@@ -262,7 +262,7 @@ export default function CustomTailorPage() {
                           <span className="text-xs text-muted-foreground">No Image</span>
                         </div>
                       )}
-                      
+
                       {isSelected && (
                         <div className="absolute top-3 right-3 bg-primary text-primary-foreground p-1.5 rounded-full flex items-center justify-center shadow-lg z-10">
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -292,8 +292,8 @@ export default function CustomTailorPage() {
                         type="button"
                         className={cn(
                           "mt-2 inline-flex w-full justify-center rounded-full py-1.5 text-xs font-semibold transition-colors border",
-                          isSelected 
-                            ? "bg-primary text-primary-foreground border-primary" 
+                          isSelected
+                            ? "bg-primary text-primary-foreground border-primary"
                             : "border-border hover:bg-primary hover:text-primary-foreground"
                         )}
                       >
@@ -372,8 +372,8 @@ export default function CustomTailorPage() {
                         type="button"
                         className={cn(
                           "w-full inline-flex justify-center rounded-full py-1.5 text-xs font-semibold transition-colors border",
-                          isSelected 
-                            ? "bg-primary text-primary-foreground border-primary" 
+                          isSelected
+                            ? "bg-primary text-primary-foreground border-primary"
                             : "border-border hover:bg-primary hover:text-primary-foreground"
                         )}
                       >
@@ -473,7 +473,7 @@ export default function CustomTailorPage() {
               {/* Ringkasan Pilihan */}
               <div className="lg:col-span-4 glass-card rounded-[24px] border border-border/50 p-6 space-y-6">
                 <h3 className="font-[var(--font-display)] text-lg font-bold uppercase tracking-wider text-foreground">Ringkasan Pilihan</h3>
-                
+
                 <div className="space-y-4 text-sm">
                   {/* Kain */}
                   <div className="space-y-2">
@@ -533,7 +533,7 @@ export default function CustomTailorPage() {
               {/* Form Order */}
               <form onSubmit={handleSubmitOrder} className="lg:col-span-8 glass-card rounded-[24px] border border-border/50 p-8 space-y-6">
                 <h3 className="font-[var(--font-display)] text-lg font-bold uppercase tracking-wider text-foreground">Formulir Detail & Ukuran (Bespoke)</h3>
-                
+
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-2">
                     <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground" htmlFor="fullName">Nama Lengkap *</label>

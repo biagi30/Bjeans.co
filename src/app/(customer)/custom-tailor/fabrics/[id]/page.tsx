@@ -65,11 +65,11 @@ export default function FabricDetailPage() {
   const [loadingFits, setLoadingFits] = useState(true);
   const [selectedFitId, setSelectedFitId] = useState("");
   const [selectedFitName, setSelectedFitName] = useState("");
-  
+
   // Sizing States
   const [sizeMode, setSizeMode] = useState<"standard" | "bespoke">("standard");
   const [selectedStandardSize, setSelectedStandardSize] = useState("32");
-  
+
   // Bespoke Sizing States (Inches)
   const [waist, setWaist] = useState(32);
   const [thigh, setThigh] = useState(22);
@@ -179,7 +179,7 @@ export default function FabricDetailPage() {
       fitId: selectedFitId,
       fitName: selectedFitName,
       sizeMode,
-      sizing: sizeMode === "standard" 
+      sizing: sizeMode === "standard"
         ? { waist: parseInt(selectedStandardSize), inseam: 32 }
         : { waist, thigh, calf, inseam }
     };
@@ -197,13 +197,13 @@ export default function FabricDetailPage() {
     // Store in localStorage cart
     const stored = localStorage.getItem(cartKey);
     let cart = stored ? JSON.parse(stored) : [];
-    
+
     // Make sure stored cart is an array
     if (!Array.isArray(cart)) cart = [];
 
     cart.push(cartItem);
     localStorage.setItem(cartKey, JSON.stringify(cart));
-    
+
     setIsAdding(false);
     setAddedToCart(true);
   };
@@ -287,9 +287,8 @@ export default function FabricDetailPage() {
                 <button
                   type="button"
                   onClick={() => setActiveImage(fabric.images[0])}
-                  className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${
-                    activeImage === fabric.images[0] ? "border-primary scale-[1.05]" : "border-border/40 opacity-70 hover:opacity-100"
-                  }`}
+                  className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeImage === fabric.images[0] ? "border-primary scale-[1.05]" : "border-border/40 opacity-70 hover:opacity-100"
+                    }`}
                 >
                   <Image src={fabric.images[0]} alt="Tekstur Bahan" fill className="object-cover" />
                 </button>
@@ -297,36 +296,32 @@ export default function FabricDetailPage() {
               <button
                 type="button"
                 onClick={() => setActiveImage("/images/1-229.png")}
-                className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${
-                  activeImage === "/images/1-229.png" ? "border-primary scale-[1.05]" : "border-border/40 opacity-70 hover:opacity-100"
-                }`}
+                className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeImage === "/images/1-229.png" ? "border-primary scale-[1.05]" : "border-border/40 opacity-70 hover:opacity-100"
+                  }`}
               >
                 <Image src="/images/1-229.png" alt="Draped Look" fill className="object-cover" />
               </button>
               <button
                 type="button"
                 onClick={() => setActiveImage("/images/1-259.png")}
-                className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${
-                  activeImage === "/images/1-259.png" ? "border-primary scale-[1.05]" : "border-border/40 opacity-70 hover:opacity-100"
-                }`}
+                className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeImage === "/images/1-259.png" ? "border-primary scale-[1.05]" : "border-border/40 opacity-70 hover:opacity-100"
+                  }`}
               >
                 <Image src="/images/1-259.png" alt="Pocket Detail" fill className="object-cover" />
               </button>
               <button
                 type="button"
                 onClick={() => setActiveImage("/images/1-219.png")}
-                className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${
-                  activeImage === "/images/1-219.png" ? "border-primary scale-[1.05]" : "border-border/40 opacity-70 hover:opacity-100"
-                }`}
+                className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeImage === "/images/1-219.png" ? "border-primary scale-[1.05]" : "border-border/40 opacity-70 hover:opacity-100"
+                  }`}
               >
                 <Image src="/images/1-219.png" alt="Stacked Look" fill className="object-cover" />
               </button>
               <button
                 type="button"
                 onClick={() => setActiveImage("/images/1-279.png")}
-                className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${
-                  activeImage === "/images/1-279.png" ? "border-primary scale-[1.05]" : "border-border/40 opacity-70 hover:opacity-100"
-                }`}
+                className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeImage === "/images/1-279.png" ? "border-primary scale-[1.05]" : "border-border/40 opacity-70 hover:opacity-100"
+                  }`}
               >
                 <Image src="/images/1-279.png" alt="Lineup Look" fill className="object-cover" />
               </button>
@@ -365,7 +360,7 @@ export default function FabricDetailPage() {
 
           {/* RIGHT COLUMN: Customization flow (7 Cols) */}
           <div className="lg:col-span-7 space-y-8">
-            
+
             {/* Step 1: Fit Selection */}
             <div className="glass-card rounded-[24px] p-6 md:p-8 border border-border/50 space-y-6">
               <div className="flex items-center justify-between">
@@ -387,11 +382,10 @@ export default function FabricDetailPage() {
                       <div
                         key={fit._id}
                         onClick={() => handleFitSelect(fit._id, fit.name)}
-                        className={`group relative flex flex-col overflow-hidden rounded-2xl border-2 transition-all duration-300 cursor-pointer ${
-                          isSelected
+                        className={`group relative flex flex-col overflow-hidden rounded-2xl border-2 transition-all duration-300 cursor-pointer ${isSelected
                             ? "border-primary bg-primary/5 shadow-lg shadow-indigo-500/10 scale-[1.01]"
                             : "border-border/60 bg-surface-elevated/40 hover:border-border hover:bg-surface-elevated/80"
-                        }`}
+                          }`}
                       >
                         <div className="relative h-32 w-full overflow-hidden">
                           {fit.image ? (
@@ -439,22 +433,20 @@ export default function FabricDetailPage() {
                 <button
                   type="button"
                   onClick={() => setSizeMode("standard")}
-                  className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all ${
-                    sizeMode === "standard"
+                  className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all ${sizeMode === "standard"
                       ? "bg-primary text-primary-foreground shadow"
                       : "text-muted-foreground hover:text-foreground"
-                  }`}
+                    }`}
                 >
                   Ukuran Standar
                 </button>
                 <button
                   type="button"
                   onClick={() => setSizeMode("bespoke")}
-                  className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all ${
-                    sizeMode === "bespoke"
+                  className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all ${sizeMode === "bespoke"
                       ? "bg-primary text-primary-foreground shadow"
                       : "text-muted-foreground hover:text-foreground"
-                  }`}
+                    }`}
                 >
                   Bespoke Sizing (Kustom)
                 </button>
@@ -481,11 +473,10 @@ export default function FabricDetailPage() {
                             key={size}
                             type="button"
                             onClick={() => setSelectedStandardSize(size)}
-                            className={`rounded-xl py-3 text-sm font-bold border-2 transition-all ${
-                              isSel
+                            className={`rounded-xl py-3 text-sm font-bold border-2 transition-all ${isSel
                                 ? "border-primary bg-primary/10 text-primary scale-[1.03]"
                                 : "border-border/60 hover:border-border bg-background"
-                            }`}
+                              }`}
                           >
                             {size}
                           </button>
@@ -603,7 +594,7 @@ export default function FabricDetailPage() {
             {/* Order Summary & Add to Cart */}
             <div className="glass-card rounded-[24px] p-6 md:p-8 border border-border/50 space-y-6">
               <h3 className="font-[var(--font-display)] text-xl font-semibold">Ringkasan Konfigurasi</h3>
-              
+
               <div className="rounded-2xl bg-surface-elevated/60 border border-border/30 p-5 space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Kain Denim</span>
