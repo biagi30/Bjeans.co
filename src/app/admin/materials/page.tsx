@@ -151,7 +151,7 @@ export default function AdminMaterials() {
       const data = await res.json();
       if (data.success) {
         fetchMaterials();
-        toast.success('Material deleted dengan sukses!');
+        toast.success('Bahan berhasil dihapus!');
       } else {
         toast.error(data.message || 'Gagal menghapus bahan');
       }
@@ -221,12 +221,12 @@ export default function AdminMaterials() {
             style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}
           >
             <div className="px-4 py-4 text-xs font-bold uppercase tracking-wider mb-2" style={{ color: colors.textMuted }}>
-              Core
+              Menu Utama
             </div>
             <nav className="flex flex-col gap-1 px-2">
               <Link href="/admin/dashboard" className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:opacity-80 transition" style={{ color: colors.text }}>
                 <LayoutDashboard size={18} style={{ color: colors.textMuted }} />
-                Dashboard
+                Dasbor
               </Link>
               
               <div className="px-2 py-4 text-xs font-bold uppercase tracking-wider mt-2" style={{ color: colors.textMuted }}>
@@ -274,7 +274,7 @@ export default function AdminMaterials() {
             </div>
 
             {loading ? (
-              <div className="text-center py-10">Loading...</div>
+              <div className="text-center py-10">Memuat...</div>
             ) : (
               <div className="rounded-lg border shadow-sm overflow-x-auto" style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}>
                 <table className="w-full text-sm text-left">
@@ -299,7 +299,7 @@ export default function AdminMaterials() {
                         <td className="px-6 py-4">Rp {m.price.toLocaleString('id-ID')}</td>
                         <td className="px-6 py-4">
                           <span className={`px-2 py-1 text-xs font-semibold rounded-full ${m.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                            {m.isActive ? 'Active' : 'Inactive'}
+                            {m.isActive ? 'Aktif' : 'Nonaktif'}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -440,7 +440,7 @@ export default function AdminMaterials() {
 
               <div className="mt-8 flex justify-end gap-3 pt-6 border-t" style={{ borderColor: colors.border }}>
                 <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2 rounded-lg font-medium bg-gray-200 text-gray-800 hover:bg-gray-300">
-                  Cancel
+                  Batal
                 </button>
                 <button type="submit" className="px-5 py-2 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700">
                   {editingId ? 'Perbarui' : 'Simpan'} Bahan

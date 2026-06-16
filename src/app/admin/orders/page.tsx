@@ -467,7 +467,7 @@ export default function AdminOrders() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5, delay: 0.1 }}
                 >
-                  Retail Orders
+                  Pesanan Ritel
                 </motion.h1>
               </div>
             </div>
@@ -505,7 +505,7 @@ export default function AdminOrders() {
                   color: colors.textSecondary
                 }}
               >
-                TOTAL ORDERS
+                TOTAL PESANAN
               </p>
               <p
                 style={{
@@ -539,7 +539,7 @@ export default function AdminOrders() {
                   color: colors.textSecondary
                 }}
               >
-                WAITING PAYMENT
+                MENUNGGU PEMBAYARAN
               </p>
               <p
                 style={{
@@ -573,7 +573,7 @@ export default function AdminOrders() {
                   color: colors.textSecondary
                 }}
               >
-                PROCESSING
+                SEDANG DIPROSES
               </p>
               <p
                 style={{
@@ -607,7 +607,7 @@ export default function AdminOrders() {
                   color: colors.textSecondary
                 }}
               >
-                DONE
+                SELESAI
               </p>
               <p
                 style={{

@@ -112,10 +112,10 @@ export default function OrderDetailPage() {
           fetchSplits(data.data._id);
         }
       } else {
-        setError(data.message || "Order not found");
+        setError(data.message || "Pesanan tidak ditemukan");
       }
     } catch (err) {
-      setError("Failed to load order");
+      setError("Gagal memuat pesanan");
     } finally {
       setLoading(false);
     }
@@ -250,7 +250,7 @@ export default function OrderDetailPage() {
       >
         <AlertCircle className="h-16 w-16 text-red-500 mb-4 animate-pulse" />
         <p className="text-xl font-bold mb-4" style={{ color: colors.text }}>
-          {error || "Order not found"}
+          {error || "Pesanan tidak ditemukan"}
         </p>
         <motion.button
           onClick={() => router.push("/admin/orders")}
@@ -399,7 +399,7 @@ export default function OrderDetailPage() {
                     </span>
                     <span>•</span>
                     <span className="uppercase tracking-wider px-2 py-0.5 rounded" style={{ backgroundColor: `${colors.accent}15`, color: colors.accent }}>
-                      TIPE: {order.orderType || order.type || "retail"}
+                      TIPE: {order.orderType === 'unified' ? 'GABUNGAN' : (order.orderType || order.type || 'retail') === 'custom' ? 'KUSTOM' : 'RITEL'}
                     </span>
                   </div>
                 </div>
@@ -423,7 +423,7 @@ export default function OrderDetailPage() {
                       border: `1px solid ${getPaymentColor(order.paymentStatus)}40`
                     }}
                   >
-                    PEMBAYARAN: {(order.paymentStatus || "unpaid").toUpperCase()}
+                    PEMBAYARAN: {order.paymentStatus === 'paid' ? 'SUDAH BAYAR' : order.paymentStatus === 'refunded' ? 'DIKEMBALIKAN (REFUND)' : 'BELUM BAYAR'}
                   </span>
                 </div>
               </div>
@@ -725,7 +725,7 @@ export default function OrderDetailPage() {
                                   color: splitType === "custom" ? "#818CF8" : "#38BDF8"
                                 }}
                               >
-                                {splitType}
+                                {splitType === 'custom' ? 'KUSTOM' : 'RITEL'}
                               </span>
                             </div>
                             

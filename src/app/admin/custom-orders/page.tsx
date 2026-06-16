@@ -442,7 +442,7 @@ export default function AdminCustomOrders() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5, delay: 0.1 }}
                 >
-                  Custom Tailoring Orders
+                  Pesanan Kustom
                 </motion.h1>
               </div>
             </div>
@@ -480,7 +480,7 @@ export default function AdminCustomOrders() {
                   color: colors.textSecondary
                 }}
               >
-                TOTAL ORDERS
+                TOTAL PESANAN
               </p>
               <p
                 style={{
@@ -514,7 +514,7 @@ export default function AdminCustomOrders() {
                   color: colors.textSecondary
                 }}
               >
-                WAITING PAYMENT
+                MENUNGGU PEMBAYARAN
               </p>
               <p
                 style={{
@@ -548,7 +548,7 @@ export default function AdminCustomOrders() {
                   color: colors.textSecondary
                 }}
               >
-                IN PRODUCTION
+                DALAM PRODUKSI
               </p>
               <p
                 style={{
@@ -582,7 +582,7 @@ export default function AdminCustomOrders() {
                   color: colors.textSecondary
                 }}
               >
-                READY FOR PICKUP
+                SIAP DIKIRIM
               </p>
               <p
                 style={{

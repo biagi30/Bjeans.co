@@ -192,12 +192,12 @@ export default function AdminDashboard() {
             style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border }}
           >
             <div className="px-4 py-4 text-xs font-bold uppercase tracking-wider mb-2" style={{ color: colors.textMuted }}>
-              Core
+              Menu Utama
             </div>
             <nav className="flex flex-col gap-1 px-2">
               <Link href="/admin/dashboard" className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md shadow-sm" style={{ backgroundColor: colors.bg, color: colors.text }}>
                 <LayoutDashboard size={18} style={{ color: colors.textMuted }} />
-                Dashboard
+                Dasbor
               </Link>
               
               <div className="px-2 py-4 text-xs font-bold uppercase tracking-wider mt-2" style={{ color: colors.textMuted }}>

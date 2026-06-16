@@ -146,17 +146,17 @@ export default function AdminProducts() {
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (uploading) {
-      toast.error('Please wait for image upload to finish.');
+      toast.error('Harap tunggu sampai unggah gambar selesai.');
       return;
     }
     const images = parseImages(formData.images);
     const priceValue = parsePrice(formData.price);
     if (Number.isNaN(priceValue)) {
-      toast.error('Please enter a valid price.');
+      toast.error('Harap masukkan harga yang valid.');
       return;
     }
     if (images.length === 0) {
-      toast.error('Please upload at least one product image.');
+      toast.error('Harap unggah minimal satu gambar produk.');
       return;
     }
     try {
@@ -181,12 +181,12 @@ export default function AdminProducts() {
         setProducts([data.data, ...products]);
         setShowAddModal(false);
         setFormData({ name: '', sku: '', price: '', stock: '', category: '', description: '', images: '' });
-        toast.success('Product added successfully!');
+        toast.success('Produk berhasil ditambahkan!');
       } else {
-        toast.error(data.message || 'Failed to add product');
+        toast.error(data.message || 'Gagal menambahkan produk');
       }
     } catch (err) {
-      toast.error('Network error');
+      toast.error('Kesalahan jaringan');
     }
   };
 
@@ -194,14 +194,14 @@ export default function AdminProducts() {
     e.preventDefault();
     if (editingProduct) {
       if (uploading) {
-        toast.error('Please wait for image upload to finish.');
+        toast.error('Harap tunggu sampai unggah gambar selesai.');
         return;
       }
       try {
         const images = parseImages(formData.images);
         const priceValue = parsePrice(formData.price);
         if (Number.isNaN(priceValue)) {
-          toast.error('Please enter a valid price.');
+          toast.error('Harap masukkan harga yang valid.');
           return;
         }
         const updatedProduct = {
@@ -227,12 +227,12 @@ export default function AdminProducts() {
           ));
           setEditingProduct(null);
           setFormData({ name: '', sku: '', price: '', stock: '', category: '', description: '', images: '' });
-          toast.success('Product updated successfully!');
+          toast.success('Produk berhasil diperbarui!');
         } else {
-          toast.error(data.message || 'Failed to update product');
+          toast.error(data.message || 'Gagal memperbarui produk');
         }
       } catch (err) {
-        toast.error('Network error');
+        toast.error('Kesalahan jaringan');
       }
     }
   };
@@ -250,12 +250,12 @@ export default function AdminProducts() {
       const data = await res.json();
       if (data.success) {
         setProducts(products.filter(p => p._id !== deleteConfirmId));
-        toast.success('Product deleted successfully!');
+        toast.success('Produk berhasil dihapus!');
       } else {
-        toast.error(data.message || 'Failed to delete product');
+        toast.error(data.message || 'Gagal menghapus produk');
       }
     } catch (err) {
-      toast.error('Network error');
+      toast.error('Kesalahan jaringan');
     } finally {
       setDeleteConfirmId(null);
     }
@@ -306,7 +306,7 @@ export default function AdminProducts() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5, delay: 0.1 }}
                 >
-                  Product Management
+                  Manajemen Produk
                 </motion.h1>
               </div>
             </div>
@@ -336,7 +336,7 @@ export default function AdminProducts() {
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
                 <Plus size={16} />
-                ADD PRODUCT
+                TAMBAH PRODUK
               </motion.button>
             </div>
           </div>
@@ -358,11 +358,11 @@ export default function AdminProducts() {
           >
             {loading ? (
               <div className="p-12 flex justify-center items-center gap-3 text-muted-foreground">
-                <Loader2 className="animate-spin" /> Loading products...
+                <Loader2 className="animate-spin" /> Memuat Produk...
               </div>
             ) : products.length === 0 ? (
               <div className="p-12 text-center text-muted-foreground">
-                No products found. Add one!
+                Tidak ada produk yang ditemukan. Tambahkan satu!
               </div>
             ) : (
               <table className="w-full min-w-[800px]">
@@ -378,7 +378,7 @@ export default function AdminProducts() {
                         color: colors.text
                       }}
                     >
-                      PRODUCT NAME
+                      NAMA PRODUK
                     </th>
                     <th
                       className="px-6 py-4 text-left"
@@ -390,7 +390,7 @@ export default function AdminProducts() {
                         color: colors.text
                       }}
                     >
-                      CATEGORY
+                      KATEGORI
                     </th>
                     <th
                       className="px-6 py-4 text-left"
@@ -402,7 +402,7 @@ export default function AdminProducts() {
                         color: colors.text
                       }}
                     >
-                      PRICE
+                      HARGA
                     </th>
                     <th
                       className="px-6 py-4 text-left"
@@ -414,7 +414,7 @@ export default function AdminProducts() {
                         color: colors.text
                       }}
                     >
-                      STOCK
+                      STOK
                     </th>
                     <th
                       className="px-6 py-4 text-left"
@@ -426,7 +426,7 @@ export default function AdminProducts() {
                         color: colors.text
                       }}
                     >
-                      ACTIONS
+                      AKSI
                     </th>
                   </tr>
                 </thead>
@@ -484,7 +484,7 @@ export default function AdminProducts() {
                           color: product.stock < 10 ? '#EF4444' : '#10B981'
                         }}
                       >
-                        {product.stock} units
+                        {product.stock} unit
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -553,7 +553,7 @@ export default function AdminProducts() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.1 }}
               >
-                {editingProduct ? 'Edit Product' : 'Add New Product'}
+                {editingProduct ? 'Edit Produk' : 'Tambah Produk Baru'}
               </motion.h3>
 
               <form onSubmit={editingProduct ? handleEditProduct : handleAddProduct}>
@@ -575,7 +575,7 @@ export default function AdminProducts() {
                         color: colors.text
                       }}
                     >
-                      PRODUCT NAME *
+                      NAMA PRODUK *
                     </label>
                     <input
                       type="text"
@@ -592,7 +592,7 @@ export default function AdminProducts() {
                         border: `2px solid ${colors.border}`,
                         ...neumorphInset
                       }}
-                      placeholder="Enter product name"
+                      placeholder="Masukkan nama produk"
                     />
                   </motion.div>
 
@@ -630,7 +630,7 @@ export default function AdminProducts() {
                         border: `2px solid ${colors.border}`,
                         ...neumorphInset
                       }}
-                      placeholder="Enter SKU"
+                      placeholder="Masukkan SKU"
                     />
                   </motion.div>
 
@@ -651,7 +651,7 @@ export default function AdminProducts() {
                         color: colors.text
                       }}
                     >
-                      CATEGORY *
+                      KATEGORI *
                     </label>
                     <select
                       required
@@ -668,11 +668,11 @@ export default function AdminProducts() {
                         ...neumorphInset
                       }}
                     >
-                      <option value="" style={{ backgroundColor: colors.bgSecondary }}>Select category</option>
+                      <option value="" style={{ backgroundColor: colors.bgSecondary }}>Pilih kategori</option>
                       <option value="Jeans" style={{ backgroundColor: colors.bgSecondary }}>Jeans</option>
-                      <option value="Jackets" style={{ backgroundColor: colors.bgSecondary }}>Jackets</option>
-                      <option value="Shirts" style={{ backgroundColor: colors.bgSecondary }}>Shirts</option>
-                      <option value="Accessories" style={{ backgroundColor: colors.bgSecondary }}>Accessories</option>
+                      <option value="Jackets" style={{ backgroundColor: colors.bgSecondary }}>Jaket</option>
+                      <option value="Shirts" style={{ backgroundColor: colors.bgSecondary }}>Kemeja</option>
+                      <option value="Accessories" style={{ backgroundColor: colors.bgSecondary }}>Aksesoris</option>
                     </select>
                   </motion.div>
 
@@ -693,7 +693,7 @@ export default function AdminProducts() {
                         color: colors.text
                       }}
                     >
-                      PRICE (Rp) *
+                      HARGA (Rp) *
                     </label>
                     <input
                       type="text"
@@ -711,7 +711,7 @@ export default function AdminProducts() {
                         border: `2px solid ${colors.border}`,
                         ...neumorphInset
                       }}
-                      placeholder="Enter price"
+                      placeholder="Masukkan harga"
                     />
                   </motion.div>
 
@@ -732,7 +732,7 @@ export default function AdminProducts() {
                         color: colors.text
                       }}
                     >
-                      STOCK *
+                      STOK *
                     </label>
                     <input
                       type="number"
@@ -749,10 +749,10 @@ export default function AdminProducts() {
                         border: `2px solid ${colors.border}`,
                         ...neumorphInset
                       }}
-                      placeholder="Qty"
+                      placeholder="Jumlah"
                     />
                   </motion.div>
-                  
+
                   {/* Description (Full Width) */}
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
@@ -770,7 +770,7 @@ export default function AdminProducts() {
                         color: colors.text
                       }}
                     >
-                      DESCRIPTION
+                      DESKRIPSI
                     </label>
                     <textarea
                       value={formData.description}
@@ -785,7 +785,7 @@ export default function AdminProducts() {
                         border: `2px solid ${colors.border}`,
                         ...neumorphInset
                       }}
-                      placeholder="Enter description"
+                      placeholder="Masukkan deskripsi"
                     />
                   </motion.div>
 
@@ -806,7 +806,7 @@ export default function AdminProducts() {
                         color: colors.text
                       }}
                     >
-                      UPLOAD PRODUCT IMAGES
+                      UPLOAD GAMBAR PRODUK
                     </label>
                     <input
                       type="file"
@@ -826,7 +826,7 @@ export default function AdminProducts() {
                     />
                     {uploading && (
                       <p className="mt-1 text-[11px]" style={{ color: colors.textSecondary }}>
-                        Uploading images...
+                        Mengunggah gambar...
                       </p>
                     )}
                     {uploadError && (
@@ -877,7 +877,7 @@ export default function AdminProducts() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.6 }}
                   >
-                    CANCEL
+                    BATALKAN
                   </motion.button>
                   <motion.button
                     type="submit"
@@ -897,7 +897,7 @@ export default function AdminProducts() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.7 }}
                   >
-                    {editingProduct ? 'UPDATE' : 'ADD'}
+                    {editingProduct ? 'PERBARUI' : 'TAMBAH'}
                   </motion.button>
                 </div>
               </form>
@@ -909,7 +909,7 @@ export default function AdminProducts() {
       {/* Delete Confirmation Modal */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm pointer-events-auto">
-          <div 
+          <div
             className="rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col p-6 border"
             style={{ backgroundColor: colors.bg, borderColor: colors.border }}
           >
@@ -918,17 +918,17 @@ export default function AdminProducts() {
               Apakah Anda yakin ingin menghapus produk ini? Tindakan ini tidak dapat dibatalkan.
             </p>
             <div className="flex justify-end gap-3">
-              <button 
-                type="button" 
-                onClick={() => setDeleteConfirmId(null)} 
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmId(null)}
                 className="px-4 py-2 rounded-lg font-medium text-sm transition"
                 style={{ backgroundColor: colors.bgSecondary, color: colors.text }}
               >
                 Batal
               </button>
-              <button 
-                type="button" 
-                onClick={executeDeleteProduct} 
+              <button
+                type="button"
+                onClick={executeDeleteProduct}
                 className="px-4 py-2 rounded-lg font-medium text-sm text-white bg-red-600 hover:bg-red-700 transition"
               >
                 Hapus
