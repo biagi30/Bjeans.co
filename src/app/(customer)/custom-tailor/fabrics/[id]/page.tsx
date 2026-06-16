@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Loader2, ArrowLeft, Check, ShoppingBag, Ruler, Scissors, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getFitImage } from "@/core/lib/utils";
 
 interface Material {
   _id: string;
@@ -394,9 +395,9 @@ export default function FabricDetailPage() {
                         }`}
                       >
                         <div className="relative h-32 w-full overflow-hidden">
-                          {fit.image ? (
+                          {getFitImage(fit) ? (
                             <Image
-                              src={fit.image}
+                              src={getFitImage(fit)}
                               alt={fit.name}
                               fill
                               className="object-cover transition-transform duration-500 group-hover:scale-105"
