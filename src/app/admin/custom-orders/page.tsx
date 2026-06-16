@@ -112,11 +112,11 @@ export default function AdminCustomOrders() {
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'waiting_payment': return 'WAITING PAYMENT';
-      case 'processing': return 'IN PRODUCTION';
-      case 'shipped': return 'READY/SHIPPED';
-      case 'done': return 'COMPLETED';
-      default: return status ? status.toUpperCase() : 'UNKNOWN';
+      case 'waiting_payment': return 'MENUNGGU PEMBAYARAN';
+      case 'processing': return 'DALAM PRODUKSI';
+      case 'shipped': return 'SIAP DIKIRIM';
+      case 'done': return 'SELESAI';
+      default: return status ? status.toUpperCase() : 'TIDAK DIKENAL';
     }
   };
 
@@ -132,13 +132,13 @@ export default function AdminCustomOrders() {
         setOrders(orders.map(order =>
           order._id === orderId ? { ...order, status: newStatus as any } : order
         ));
-        toast.success(`Custom order status updated to ${getStatusLabel(newStatus)}`);
+        toast.success(`Status pesanan kustom berhasil diperbarui menjadi ${getStatusLabel(newStatus)}`);
         setSelectedOrder(null);
       } else {
-        toast.error(data.message || 'Failed to update order');
+        toast.error(data.message || 'Gagal memperbarui status pesanan');
       }
     } catch (err) {
-      toast.error('Network error');
+      toast.error('Kesalahan jaringan');
     }
   };
 
@@ -242,7 +242,7 @@ export default function AdminCustomOrders() {
                       color: colors.text
                     }}
                   >
-                    ORDER ID
+                    ID PESANAN
                   </th>
                   <th
                     className="px-6 py-4 text-left"
@@ -254,7 +254,7 @@ export default function AdminCustomOrders() {
                       color: colors.text
                     }}
                   >
-                    CUSTOMER
+                    PELANGGAN
                   </th>
                   <th
                     className="px-6 py-4 text-left"
@@ -266,7 +266,7 @@ export default function AdminCustomOrders() {
                       color: colors.text
                     }}
                   >
-                    DATE
+                    TANGGAL
                   </th>
                   <th
                     className="px-6 py-4 text-left"
@@ -302,7 +302,7 @@ export default function AdminCustomOrders() {
                       color: colors.text
                     }}
                   >
-                    ACTIONS
+                    AKSI
                   </th>
                 </tr>
               </thead>
@@ -339,7 +339,7 @@ export default function AdminCustomOrders() {
                             color: colors.text
                           }}
                         >
-                          {order.customer?.name || "Guest User"}
+                          {order.customer?.name || "Pengguna Tamu"}
                         </p>
                         <p
                           style={{
@@ -349,7 +349,7 @@ export default function AdminCustomOrders() {
                             color: colors.textSecondary
                           }}
                         >
-                          {order.customer?.email || "No email"}
+                          {order.customer?.email || "Tidak ada email"}
                         </p>
                       </div>
                     </td>
@@ -693,7 +693,7 @@ export default function AdminCustomOrders() {
 
           {loading ? (
             <div className="p-12 flex justify-center items-center gap-3 text-muted-foreground">
-              <Loader2 className="animate-spin" /> Loading custom orders...
+              <Loader2 className="animate-spin" /> Memuat data pesanan kustom...
             </div>
           ) : sortedFilteredOrders.length === 0 ? (
             <motion.div
@@ -771,7 +771,7 @@ export default function AdminCustomOrders() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.4, delay: 0.1 }}
                 >
-                  CUSTOM ORDER #{selectedOrder._id.substring(selectedOrder._id.length - 6).toUpperCase()}
+                  PESANAN #{selectedOrder._id.substring(selectedOrder._id.length - 6).toUpperCase()}
                 </motion.h3>
                 <motion.span
                   className="px-4 py-2 rounded-full"
@@ -809,27 +809,27 @@ export default function AdminCustomOrders() {
                       color: colors.textSecondary
                     }}
                   >
-                    CUSTOMER INFORMATION
-                  </p>
-                  <p
-                    style={{
-                      fontFamily: 'var(--font-space), sans-serif',
-                      fontWeight: 600,
-                      fontSize: '14px',
-                      color: colors.text
-                    }}
-                  >
-                    {selectedOrder.customer?.name || "Guest User"}
-                  </p>
-                  <p
-                    style={{
-                      fontFamily: 'var(--font-space), sans-serif',
-                      fontWeight: 500,
-                      fontSize: '14px',
-                      color: colors.textSecondary
-                    }}
-                  >
-                    {selectedOrder.customer?.email || "No email"}
+                    INFORMASI PELANGGAN
+                </p>
+                <p
+                  style={{
+                    fontFamily: 'var(--font-space), sans-serif',
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    color: colors.text
+                  }}
+                >
+                  {selectedOrder.customer?.name || "Pengguna Tamu"}
+                </p>
+                <p
+                  style={{
+                    fontFamily: 'var(--font-space), sans-serif',
+                    fontWeight: 500,
+                    fontSize: '14px',
+                    color: colors.textSecondary
+                  }}
+                >
+                  {selectedOrder.customer?.email || "Tidak ada email"}
                   </p>
                 </motion.div>
 
@@ -848,7 +848,7 @@ export default function AdminCustomOrders() {
                       color: colors.textSecondary
                     }}
                   >
-                    ORDER DATE
+                    TANGGAL PESANAN
                   </p>
                   <p
                     style={{
@@ -877,7 +877,7 @@ export default function AdminCustomOrders() {
                       color: colors.textSecondary
                     }}
                   >
-                    TOTAL PRICE
+                    TOTAL HARGA
                   </p>
                   <p
                     style={{
@@ -905,7 +905,7 @@ export default function AdminCustomOrders() {
                       color: colors.textSecondary
                     }}
                   >
-                    UPDATE STATUS
+                    PERBARUI STATUS
                   </p>
                   <div className="grid grid-cols-2 gap-3">
                     <motion.button
@@ -922,7 +922,7 @@ export default function AdminCustomOrders() {
                       whileHover={{ scale: 1.02, y: -2 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      IN PRODUCTION
+                      PRODUKSI
                     </motion.button>
                     <motion.button
                       onClick={() => handleStatusChange(selectedOrder._id, 'shipped')}
@@ -938,7 +938,7 @@ export default function AdminCustomOrders() {
                       whileHover={{ scale: 1.02, y: -2 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      READY
+                      SIAP DIKIRIM
                     </motion.button>
                     <motion.button
                       onClick={() => handleStatusChange(selectedOrder._id, 'done')}
@@ -954,7 +954,7 @@ export default function AdminCustomOrders() {
                       whileHover={{ scale: 1.02, y: -2 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      COMPLETED
+                      SELESAI
                     </motion.button>
                   </div>
                 </motion.div>
@@ -977,7 +977,7 @@ export default function AdminCustomOrders() {
                       color: colors.textSecondary
                     }}
                   >
-                    CUSTOM DETAILS
+                    DETAIL KUSTOM
                   </p>
                   
                   {selectedOrder.items?.map((item, index) => (
@@ -1033,7 +1033,7 @@ export default function AdminCustomOrders() {
                            ))}
                          </div>
                       ) : (
-                         <p className="text-sm text-muted-foreground">No specific custom details recorded in DB.</p>
+                         <p className="text-sm text-muted-foreground">Tidak ada detail kustom yang tercatat di database.</p>
                       )}
                     </div>
                   ))}
@@ -1073,7 +1073,7 @@ export default function AdminCustomOrders() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  CLOSE
+                  TUTUP
                 </motion.button>
             </div>
             </motion.div>

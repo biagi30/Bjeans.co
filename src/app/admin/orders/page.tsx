@@ -120,11 +120,11 @@ export default function AdminOrders() {
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'waiting_payment': return 'WAITING PAYMENT';
-      case 'processing': return 'PROCESSING';
-      case 'shipped': return 'SHIPPED';
-      case 'done': return 'DONE';
-      default: return status ? status.toUpperCase() : 'UNKNOWN';
+      case 'waiting_payment': return 'MENUNGGU PEMBAYARAN';
+      case 'processing': return 'SEDANG DIPROSES';
+      case 'shipped': return 'DIKIRIM';
+      case 'done': return 'SELESAI';
+      default: return status ? status.toUpperCase() : 'TIDAK DIKENAL';
     }
   };
 
@@ -140,13 +140,13 @@ export default function AdminOrders() {
         setOrders(orders.map(order =>
           order._id === orderId ? { ...order, status: newStatus as any } : order
         ));
-        toast.success(`Order status updated to ${newStatus}`);
+        toast.success(`Status pesanan berhasil diperbarui menjadi ${getStatusLabel(newStatus)}`);
         setSelectedOrder(null);
       } else {
-        toast.error(data.message || 'Failed to update order');
+        toast.error(data.message || 'Gagal memperbarui status pesanan');
       }
     } catch (err) {
-      toast.error('Network error');
+      toast.error('Kesalahan jaringan');
     }
   };
 
@@ -245,7 +245,7 @@ export default function AdminOrders() {
                     color: colors.text
                   }}
                 >
-                  ORDER ID
+                  ID PESANAN
                 </th>
                 <th
                   className="px-6 py-4 text-left"
@@ -257,7 +257,7 @@ export default function AdminOrders() {
                     color: colors.text
                   }}
                 >
-                  CUSTOMER
+                  PELANGGAN
                 </th>
                 <th
                   className="px-6 py-4 text-left"
@@ -269,7 +269,7 @@ export default function AdminOrders() {
                     color: colors.text
                   }}
                 >
-                  DATE
+                  TANGGAL
                 </th>
                 <th
                   className="px-6 py-4 text-left"
@@ -281,7 +281,7 @@ export default function AdminOrders() {
                     color: colors.text
                   }}
                 >
-                  ITEMS
+                  BARANG
                 </th>
                 <th
                   className="px-6 py-4 text-left"
@@ -317,7 +317,7 @@ export default function AdminOrders() {
                     color: colors.text
                   }}
                 >
-                  ACTIONS
+                  AKSI
                 </th>
               </tr>
             </thead>
@@ -354,7 +354,7 @@ export default function AdminOrders() {
                           color: colors.text
                         }}
                       >
-                        {order.customer?.name || "Guest User"}
+                        {order.customer?.name || "Pengguna Tamu"}
                       </p>
                       <p
                         style={{
@@ -364,7 +364,7 @@ export default function AdminOrders() {
                           color: colors.textSecondary
                         }}
                       >
-                        {order.customer?.email || "No email"}
+                        {order.customer?.email || "Tidak ada email"}
                       </p>
                     </div>
                   </td>
@@ -388,7 +388,7 @@ export default function AdminOrders() {
                       color: colors.text
                     }}
                   >
-                    {order.items?.length || 0} items
+                    {order.items?.length || 0} barang
                   </td>
                   <td
                     className="px-6 py-4"
@@ -718,7 +718,7 @@ export default function AdminOrders() {
 
           {loading ? (
             <div className="p-12 flex justify-center items-center gap-3 text-muted-foreground">
-              <Loader2 className="animate-spin" /> Loading orders...
+              <Loader2 className="animate-spin" /> Memuat data pesanan...
             </div>
           ) : sortedFilteredOrders.length === 0 ? (
             <motion.div
@@ -796,7 +796,7 @@ export default function AdminOrders() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.4, delay: 0.1 }}
                 >
-                  ORDER #{selectedOrder._id.substring(selectedOrder._id.length - 6).toUpperCase()}
+                  PESANAN #{selectedOrder._id.substring(selectedOrder._id.length - 6).toUpperCase()}
                 </motion.h3>
                 <motion.span
                   className="px-4 py-2 rounded-full"
@@ -832,7 +832,7 @@ export default function AdminOrders() {
                     color: colors.textSecondary
                   }}
                 >
-                  CUSTOMER INFORMATION
+                  INFORMASI PELANGGAN
                 </p>
                 <p
                   style={{
@@ -842,7 +842,7 @@ export default function AdminOrders() {
                     color: colors.text
                   }}
                 >
-                  {selectedOrder.customer?.name || "Guest User"}
+                  {selectedOrder.customer?.name || "Pengguna Tamu"}
                 </p>
                 <p
                   style={{
@@ -852,7 +852,7 @@ export default function AdminOrders() {
                     color: colors.textSecondary
                   }}
                 >
-                  {selectedOrder.customer?.email || "No email"}
+                  {selectedOrder.customer?.email || "Tidak ada email"}
                 </p>
               </motion.div>
 
@@ -871,7 +871,7 @@ export default function AdminOrders() {
                     color: colors.textSecondary
                   }}
                 >
-                  SHIPPING ADDRESS
+                  ALAMAT PENGIRIMAN
                 </p>
                 <p
                   style={{
@@ -881,7 +881,7 @@ export default function AdminOrders() {
                     color: colors.text
                   }}
                 >
-                  {selectedOrder.shippingAddress || "No address provided"}
+                  {selectedOrder.shippingAddress || "Alamat tidak diberikan"}
                 </p>
               </motion.div>
 
@@ -902,7 +902,7 @@ export default function AdminOrders() {
                       color: colors.textSecondary
                     }}
                   >
-                    ORDER DATE
+                    TANGGAL PESANAN
                   </p>
                   <p
                     style={{
@@ -926,7 +926,7 @@ export default function AdminOrders() {
                       color: colors.textSecondary
                     }}
                   >
-                    ITEMS
+                    JUMLAH BARANG
                   </p>
                   <p
                     style={{
@@ -936,7 +936,7 @@ export default function AdminOrders() {
                       color: colors.text
                     }}
                   >
-                    {selectedOrder.items?.length || 0} items
+                    {selectedOrder.items?.length || 0} barang
                   </p>
                 </div>
                 <div>
@@ -950,7 +950,7 @@ export default function AdminOrders() {
                       color: colors.textSecondary
                     }}
                   >
-                    TOTAL
+                    TOTAL PEMBAYARAN
                   </p>
                   <p
                     style={{
@@ -980,13 +980,13 @@ export default function AdminOrders() {
                     color: colors.textSecondary
                   }}
                 >
-                  ORDERED ITEMS
+                  DAFTAR BARANG
                 </p>
                 <div className="space-y-2">
                   {selectedOrder.items?.map((item, i) => (
                     <div key={i} className="flex justify-between items-center py-2 border-b border-border/30">
                       <div className="text-sm">
-                        <span className="font-semibold text-foreground">{item.quantity}x</span> {item.name || item.product?.name || 'Unknown Product'}
+                        <span className="font-semibold text-foreground">{item.quantity}x</span> {item.name || item.product?.name || 'Produk Tidak Dikenal'}
                       </div>
                       <div className="text-sm font-semibold">
                         Rp{(item.totalPrice || item.unitPrice * item.quantity).toLocaleString('id-ID')}
@@ -1011,7 +1011,7 @@ export default function AdminOrders() {
                     color: colors.textSecondary
                   }}
                 >
-                  UPDATE STATUS
+                  PERBARUI STATUS
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <motion.button
@@ -1028,7 +1028,7 @@ export default function AdminOrders() {
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    PROCESS
+                    PROSES
                   </motion.button>
                   <motion.button
                     onClick={() => handleStatusChange(selectedOrder._id, 'shipped')}
@@ -1044,7 +1044,7 @@ export default function AdminOrders() {
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    SHIP
+                    KIRIM
                   </motion.button>
                   <motion.button
                     onClick={() => handleStatusChange(selectedOrder._id, 'done')}
@@ -1060,7 +1060,7 @@ export default function AdminOrders() {
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    DONE
+                    SELESAI
                   </motion.button>
                 </div>
               </motion.div>
@@ -1097,7 +1097,7 @@ export default function AdminOrders() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  CLOSE
+                   TUTUP
                 </motion.button>
             </div>
             

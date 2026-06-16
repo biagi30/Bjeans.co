@@ -148,12 +148,12 @@ export default function OrderDetailPage() {
       const data = await res.json();
       if (data.success) {
         setOrder(data.data);
-        toast.success(`Order status updated to ${newStatus.toUpperCase()}`);
+        toast.success(`Status pesanan berhasil diperbarui menjadi ${getStatusLabel(newStatus, order.type)}`);
       } else {
-        toast.error(data.message || "Failed to update status");
+        toast.error(data.message || "Gagal memperbarui status pesanan");
       }
     } catch (err) {
-      toast.error("Network error updating status");
+      toast.error("Kesalahan jaringan saat memperbarui status");
     } finally {
       setUpdatingStatus(false);
     }
@@ -171,12 +171,12 @@ export default function OrderDetailPage() {
       const data = await res.json();
       if (data.success) {
         setOrder(data.data);
-        toast.success(`Payment status updated to ${newPaymentStatus.toUpperCase()}`);
+        toast.success(`Status pembayaran berhasil diperbarui menjadi ${newPaymentStatus.toUpperCase()}`);
       } else {
-        toast.error(data.message || "Failed to update payment status");
+        toast.error(data.message || "Gagal memperbarui status pembayaran");
       }
     } catch (err) {
-      toast.error("Network error updating payment status");
+      toast.error("Kesalahan jaringan saat memperbarui status pembayaran");
     } finally {
       setUpdatingPayment(false);
     }
@@ -200,15 +200,15 @@ export default function OrderDetailPage() {
   const getStatusLabel = (status: string, type?: string) => {
     switch (status) {
       case "waiting_payment":
-        return "WAITING PAYMENT";
+        return "MENUNGGU PEMBAYARAN";
       case "processing":
-        return type === "custom" ? "IN PRODUCTION" : "PROCESSING";
+        return type === "custom" ? "DALAM PRODUKSI" : "SEDANG DIPROSES";
       case "shipped":
-        return type === "custom" ? "READY FOR PICKUP" : "SHIPPED";
+        return type === "custom" ? "SIAP DIKIRIM" : "DIKIRIM";
       case "done":
-        return type === "custom" ? "COMPLETED" : "DONE";
+        return type === "custom" ? "SELESAI" : "SELESAI";
       default:
-        return status ? status.toUpperCase() : "UNKNOWN";
+        return status ? status.toUpperCase() : "TIDAK DIKENAL";
     }
   };
 
