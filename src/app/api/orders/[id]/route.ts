@@ -1,5 +1,5 @@
 import { connectDatabase } from "@/backend/config/db";
-import { Order } from "@/backend/models";
+import { Order, Product } from "@/backend/models";
 import {
   validateBody,
   orderUpdateSchema,
@@ -80,13 +80,28 @@ export async function DELETE(
     }
 
     await connectDatabase();
-    const order = await Order.findByIdAndDelete(id);
-
+    
+    // Find the order first to restore stock
+    const order = await Order.findById(id);
     if (!order) {
       return errorResponse("Order not found", 404);
     }
 
-    return successResponse({ message: "Order deleted" });
+    // Restore stock for retail items if the order is unpaid
+    if (order.paymentStatus === "unpaid") {
+      for (const item of order.items) {
+        if (item.itemType === "retail" && item.product) {
+          await Product.findByIdAndUpdate(item.product, {
+            $inc: { stock: item.quantity }
+          });
+        }
+      }
+    }
+
+    // Delete the order
+    await Order.findByIdAndDelete(id);
+
+    return successResponse({ message: "Order deleted and stock restored" });
   } catch (error: any) {
     return errorResponse(error.message, 500);
   }

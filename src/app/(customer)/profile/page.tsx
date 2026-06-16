@@ -52,6 +52,9 @@ export default function ProfilePage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [payingOrderId, setPayingOrderId] = useState<string | null>(null);
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+  const [cancelConfirmOrderId, setCancelConfirmOrderId] = useState<string | null>(null);
 
   // Password state
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -76,6 +79,108 @@ export default function ProfilePage() {
       console.error("Gagal mengambil riwayat pesanan:", err);
     } finally {
       setOrdersLoading(false);
+    }
+  };
+
+  const triggerSnapPayment = (token: string, orderId: string) => {
+    if (typeof window !== "undefined" && (window as any).snap) {
+      (window as any).snap.pay(token, {
+        onSuccess: async (result: any) => {
+          console.log("Midtrans payment success:", result);
+          setLoading(true);
+          try {
+            // Update order status in DB
+            const res = await fetch(`/api/orders/${orderId}/payment`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                paymentStatus: "paid",
+                status: "processing"
+              })
+            });
+            if (res.ok) {
+              toast.success("Pembayaran berhasil dikonfirmasi!");
+              if (user && user._id) {
+                await fetchOrders(user._id);
+              }
+            } else {
+              toast.error("Gagal mengonfirmasi status pembayaran ke server.");
+            }
+          } catch (err: any) {
+            toast.error("Terjadi kesalahan: " + err.message);
+          } finally {
+            setLoading(false);
+          }
+        },
+        onPending: (result: any) => {
+          console.log("Midtrans payment pending:", result);
+          toast.info("Pembayaran tertunda. Silakan selesaikan pembayaran Anda.");
+        },
+        onError: (result: any) => {
+          console.error("Midtrans payment error:", result);
+          toast.error("Pembayaran gagal. Silakan coba lagi.");
+        },
+        onClose: () => {
+          console.log("Midtrans payment popup closed");
+          toast.info("Anda menutup jendela pembayaran.");
+        }
+      });
+    } else {
+      toast.error("Midtrans Snap SDK gagal dimuat. Coba muat ulang halaman.");
+    }
+  };
+
+  const handlePayOrder = async (order: any) => {
+    setPayingOrderId(order._id);
+    try {
+      const tokenRes = await fetch("/api/payment/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderIds: [order._id],
+          shippingFee: 0,
+          serviceFee: 2000
+        })
+      });
+
+      if (!tokenRes.ok) {
+        const errData = await tokenRes.json().catch(() => ({}));
+        throw new Error(errData.message || errData.error || "Gagal mendapatkan token pembayaran dari Midtrans.");
+      }
+
+      const tokenJson = await tokenRes.json();
+      if (tokenJson.success && tokenJson.data?.token) {
+        triggerSnapPayment(tokenJson.data.token, order._id);
+      } else {
+        throw new Error("Respon pembayaran Midtrans tidak valid.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Terjadi kesalahan saat memproses pembayaran.");
+    } finally {
+      setPayingOrderId(null);
+    }
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    setCancellingOrderId(orderId);
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: "DELETE"
+      });
+
+      if (res.ok) {
+        toast.success("Pesanan berhasil dibatalkan!");
+        if (user && user._id) {
+          await fetchOrders(user._id);
+        }
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        toast.error(errData.message || "Gagal membatalkan pesanan.");
+      }
+    } catch (err: any) {
+      toast.error("Terjadi kesalahan: " + err.message);
+    } finally {
+      setCancellingOrderId(null);
     }
   };
 
@@ -421,6 +526,40 @@ export default function ProfilePage() {
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2">
+                        {order.paymentStatus === "unpaid" && (order.status === "waiting_payment" || !order.status) && (
+                          <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePayOrder(order);
+                              }}
+                              disabled={payingOrderId === order._id || cancellingOrderId === order._id}
+                              className="bg-primary text-primary-foreground hover:scale-[1.02] active:scale-[0.98] transition-transform text-[11px] font-bold px-3.5 py-1.5 rounded-full shadow-md flex items-center gap-1.5 disabled:opacity-50 disabled:scale-100 animate-pulse"
+                            >
+                              {payingOrderId === order._id ? (
+                                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                              ) : (
+                                <CreditCard size={12} />
+                              )}
+                              {payingOrderId === order._id ? "Memproses..." : "Bayar Sekarang"}
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCancelConfirmOrderId(order._id);
+                              }}
+                              disabled={payingOrderId === order._id || cancellingOrderId === order._id}
+                              className="bg-red-500/10 text-red-500 hover:bg-red-500/20 text-[11px] font-bold px-3.5 py-1.5 rounded-full border border-red-500/20 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                            >
+                              {cancellingOrderId === order._id ? (
+                                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
+                              ) : (
+                                <X size={12} />
+                              )}
+                              {cancellingOrderId === order._id ? "Membatalkan..." : "Batalkan"}
+                            </button>
+                          </>
+                        )}
                         <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wider ${statusBadge.css}`}>
                           {statusBadge.label}
                         </span>
@@ -712,6 +851,43 @@ export default function ProfilePage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* MODAL KONFIRMASI BATALKAN PESANAN */}
+      {cancelConfirmOrderId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-[24px] border border-red-500/25 bg-background p-6 shadow-2xl space-y-6 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+            <div className="h-14 w-14 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center border border-red-500/20 shadow-inner">
+              <X size={28} />
+            </div>
+            
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold tracking-tight text-foreground">Batalkan Pesanan Ini?</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Apakah Anda yakin ingin membatalkan pesanan ini? Aksi ini akan menghapus pesanan secara permanen dan **mengembalikan semua stok produk** ke sistem toko kami.
+              </p>
+            </div>
+
+            <div className="flex w-full gap-3">
+              <button
+                type="button"
+                onClick={() => setCancelConfirmOrderId(null)}
+                className="flex-1 py-3 text-xs font-bold border border-border rounded-xl text-muted-foreground hover:bg-muted transition-colors active:scale-[0.98]"
+              >
+                Kembali
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleCancelOrder(cancelConfirmOrderId);
+                  setCancelConfirmOrderId(null);
+                }}
+                className="flex-1 py-3 text-xs font-bold bg-red-500 hover:bg-red-600 text-white rounded-xl shadow-lg shadow-red-500/20 transition-colors active:scale-[0.98]"
+              >
+                Ya, Batalkan
+              </button>
+            </div>
           </div>
         </div>
       )}

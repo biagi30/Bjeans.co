@@ -195,19 +195,17 @@ export default function FabricDetailPage() {
     };
 
     // Store in localStorage cart
-    setTimeout(() => {
-      const stored = localStorage.getItem(cartKey);
-      let cart = stored ? JSON.parse(stored) : [];
-      
-      // Make sure stored cart is an array
-      if (!Array.isArray(cart)) cart = [];
+    const stored = localStorage.getItem(cartKey);
+    let cart = stored ? JSON.parse(stored) : [];
+    
+    // Make sure stored cart is an array
+    if (!Array.isArray(cart)) cart = [];
 
-      cart.push(cartItem);
-      localStorage.setItem(cartKey, JSON.stringify(cart));
-      
-      setIsAdding(false);
-      setAddedToCart(true);
-    }, 800);
+    cart.push(cartItem);
+    localStorage.setItem(cartKey, JSON.stringify(cart));
+    
+    setIsAdding(false);
+    setAddedToCart(true);
   };
 
   if (loading) {

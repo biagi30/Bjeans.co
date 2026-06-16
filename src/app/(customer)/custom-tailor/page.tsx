@@ -174,16 +174,14 @@ export default function CustomTailorPage() {
       .catch(err => console.error("Gagal menyimpan profil ukuran otomatis:", err));
     }
 
-    setTimeout(() => {
-      const stored = localStorage.getItem(cartKey);
-      let cart = stored ? JSON.parse(stored) : [];
-      if (!Array.isArray(cart)) cart = [];
+    const stored = localStorage.getItem(cartKey);
+    let cart = stored ? JSON.parse(stored) : [];
+    if (!Array.isArray(cart)) cart = [];
 
-      cart.push(cartItem);
-      localStorage.setItem(cartKey, JSON.stringify(cart));
-      setIsAdding(false);
-      router.push("/cart");
-    }, 800);
+    cart.push(cartItem);
+    localStorage.setItem(cartKey, JSON.stringify(cart));
+    setIsAdding(false);
+    router.push("/cart");
   };
 
   return (

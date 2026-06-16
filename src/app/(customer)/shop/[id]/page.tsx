@@ -84,30 +84,28 @@ export default function ProductDetailPage() {
       image: product.images && product.images.length > 0 ? product.images[0] : null
     };
 
-    setTimeout(() => {
-      const stored = localStorage.getItem(cartKey);
-      let cart = stored ? JSON.parse(stored) : [];
-      if (!Array.isArray(cart)) cart = [];
+    const stored = localStorage.getItem(cartKey);
+    let cart = stored ? JSON.parse(stored) : [];
+    if (!Array.isArray(cart)) cart = [];
 
-      const existingIndex = cart.findIndex((item: any) => 
-        item.type === "retail" && item.id.split("-")[1] === product._id
-      );
+    const existingIndex = cart.findIndex((item: any) => 
+      item.type === "retail" && item.id.split("-")[1] === product._id
+    );
 
-      if (existingIndex > -1) {
-        if (cart[existingIndex].quantity >= product.stock) {
-          toast.error(`Anda tidak dapat menambahkan lebih dari ${product.stock} unit ke dalam keranjang (batas stok maksimum).`);
-          setIsAdding(false);
-          return;
-        }
-        cart[existingIndex].quantity = cart[existingIndex].quantity + 1;
-      } else {
-        cart.push(cartItem);
+    if (existingIndex > -1) {
+      if (cart[existingIndex].quantity >= product.stock) {
+        toast.error(`Anda tidak dapat menambahkan lebih dari ${product.stock} unit ke dalam keranjang (batas stok maksimum).`);
+        setIsAdding(false);
+        return;
       }
+      cart[existingIndex].quantity = cart[existingIndex].quantity + 1;
+    } else {
+      cart.push(cartItem);
+    }
 
-      localStorage.setItem(cartKey, JSON.stringify(cart));
-      setIsAdding(false);
-      setAddedToCart(true);
-    }, 600);
+    localStorage.setItem(cartKey, JSON.stringify(cart));
+    setIsAdding(false);
+    setAddedToCart(true);
   };
 
   if (loading) {
