@@ -53,44 +53,59 @@ export default function CartPage() {
     setMounted(true);
 
     const initCart = async () => {
-      // Determine per-user cart key
-      let key = "bjeans_cart_guest";
+      // 1. Tampilkan data dari guest cart dulu secara instan agar UI tidak kosong/menunggu lama
+      const guestStored = localStorage.getItem("bjeans_cart_guest");
+      if (guestStored) {
+        try {
+          const parsedItems = JSON.parse(guestStored);
+          setCartItems(parsedItems);
+          setSelectedIds(parsedItems.map((item: CartItem) => item.id || item._id));
+        } catch (e) {
+          console.error("Gagal mengurai keranjang tamu awal:", e);
+        }
+      }
+
+      // 2. Lakukan request API secara PARALLEL (bukan sekuensial) untuk memangkas waktu load
       try {
-        const res = await fetch("/api/auth/me", { cache: "no-store" });
-        if (res.ok) {
-          const data = await res.json();
+        const [authRes, prodRes] = await Promise.all([
+          fetch("/api/auth/me", { cache: "no-store" }).catch(() => null),
+          fetch("/api/products").catch(() => null)
+        ]);
+
+        let key = "bjeans_cart_guest";
+        if (authRes && authRes.ok) {
+          const data = await authRes.json();
           const userId = data.data?.user?._id;
           if (userId) {
             key = `bjeans_cart_${userId}`;
           }
         }
-      } catch {
-        // Guest mode
-      }
-      setCartKey(key);
+        setCartKey(key);
 
-      // Load products list to get live stock
-      try {
-        const prodRes = await fetch("/api/products");
-        if (prodRes.ok) {
+        if (prodRes && prodRes.ok) {
           const prodData = await prodRes.json();
           if (prodData.success) {
             setProducts(prodData.data);
           }
         }
-      } catch (err) {
-        console.error("Gagal memuat daftar produk untuk validasi stok:", err);
-      }
 
-      const stored = localStorage.getItem(key);
-      if (stored) {
-        try {
-          const parsedItems = JSON.parse(stored);
-          setCartItems(parsedItems);
-          setSelectedIds(parsedItems.map((item: CartItem) => item.id || item._id));
-        } catch (e) {
-          console.error("Failed to parse cart", e);
+        // 3. Setelah mendapat key yang sesuai (guest atau user terdaftar), muat keranjang yang sebenarnya
+        const stored = localStorage.getItem(key);
+        if (stored) {
+          try {
+            const parsedItems = JSON.parse(stored);
+            setCartItems(parsedItems);
+            setSelectedIds(parsedItems.map((item: CartItem) => item.id || item._id));
+          } catch (e) {
+            console.error("Gagal mengurai data keranjang tersimpan:", e);
+          }
+        } else if (key !== "bjeans_cart_guest") {
+          // Jika key-nya ternyata user terdaftar tapi data local storage kosong, reset keranjang
+          setCartItems([]);
+          setSelectedIds([]);
         }
+      } catch (err) {
+        console.error("Gagal memuat inisialisasi data keranjang:", err);
       }
     };
 

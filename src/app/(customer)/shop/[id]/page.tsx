@@ -16,6 +16,7 @@ interface Product {
   stock: number;
   category: string;
   images: string[];
+  shrinkageWarning?: string;
 }
 
 export default function ProductDetailPage() {
@@ -30,6 +31,8 @@ export default function ProductDetailPage() {
   const [isAdding, setIsAdding] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
   const [cartKey, setCartKey] = useState<string>("bjeans_cart_guest");
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     async function fetchUser() {
@@ -128,9 +131,14 @@ export default function ProductDetailPage() {
     );
   }
 
+  const needsToggle = !!(product.description && (
+    product.description.length > 120 ||
+    (product.description.match(/\n/g) || []).length >= 3
+  ));
+
   return (
-    <div className="min-h-screen bg-background text-foreground pt-24 pb-16">
-      <div className="max-w-7xl mx-auto px-6 md:px-10">
+    <div className="min-h-screen bg-background text-foreground pt-32 pb-16">
+      <div className="max-w-5xl mx-auto px-6 md:px-10">
         {/* Back Link */}
         <Link
           href="/shop"
@@ -141,39 +149,66 @@ export default function ProductDetailPage() {
         </Link>
 
         <motion.div
-          className="glass-card rounded-[24px] p-6 md:p-12 border border-border/50 flex flex-col md:flex-row gap-12"
+          className="glass-card rounded-[24px] p-6 md:p-8 border border-border/50 flex flex-col md:flex-row gap-8 items-start"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="flex-1 flex flex-col items-center justify-center">
+          {/* Left Column: Image + Thumbnails */}
+          <div className="w-full md:w-[320px] shrink-0 flex flex-col items-center">
             {product.images && product.images.length > 0 ? (
-              <div className="relative w-full aspect-[4/5] max-w-[400px] overflow-hidden rounded-2xl shadow-xl border border-border/40 group">
-                <Image
-                  src={product.images[0]}
-                  alt={product.name}
-                  fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  priority
-                />
+              <div className="w-full flex flex-col items-center">
+                <div className="relative w-full aspect-[4/5] max-w-[320px] overflow-hidden rounded-2xl shadow-xl border border-border/40 group">
+                  <Image
+                    src={product.images[activeImageIndex] || product.images[0]}
+                    alt={product.name}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    priority
+                  />
+                </div>
+                
+                {product.images.length > 1 && (
+                  <div className="flex gap-2 mt-4 justify-center flex-wrap max-w-[320px] w-full">
+                    {product.images.map((img, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setActiveImageIndex(idx)}
+                        className={`relative h-12 w-12 rounded-xl overflow-hidden border-2 transition-all shrink-0 ${
+                          activeImageIndex === idx
+                            ? "border-primary scale-[1.05] shadow-md"
+                            : "border-border/40 opacity-70 hover:opacity-100"
+                        }`}
+                      >
+                        <Image
+                          src={img}
+                          alt={`${product.name} thumbnail ${idx + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="w-[400px] h-[500px] flex items-center justify-center bg-muted rounded-xl text-muted-foreground border border-border/40">
+              <div className="w-[300px] h-[375px] flex items-center justify-center bg-muted rounded-xl text-muted-foreground border border-border/40">
                 Tidak ada gambar
               </div>
             )}
           </div>
 
-          <div className="flex-grow flex-1 flex flex-col gap-6 justify-center max-w-xl">
+          {/* Right Column: Title, Category, Price, Stock, Description, Warnings & Add to Cart button */}
+          <div className="flex-grow flex-1 flex flex-col gap-5 justify-start w-full">
             <div>
-              <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider border border-primary/20 mb-3">
+              <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider border border-primary/20 mb-2.5">
                 {product.category}
               </span>
-              <h1 className="text-3xl md:text-5xl font-display font-semibold leading-tight text-foreground">{product.name}</h1>
+              <h1 className="text-2xl md:text-3xl font-display font-semibold leading-tight text-foreground">{product.name}</h1>
             </div>
 
             <div className="flex items-center gap-4 py-2 border-y border-border/30">
-              <span className="text-3xl font-bold text-primary">Rp{product.price.toLocaleString('id-ID')}</span>
+              <span className="text-xl md:text-2xl font-bold text-primary">Rp{product.price.toLocaleString('id-ID')}</span>
               {product.stock > 0 ? (
                 <span className="px-2.5 py-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/20 text-xs font-semibold">Stok: {product.stock} Tersedia</span>
               ) : (
@@ -181,21 +216,49 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{product.description || "Tidak ada deskripsi produk."}</p>
+            {/* Structured Description Block with Expander */}
+            <div className="space-y-2 p-4 rounded-xl bg-white/5 border border-border/40 w-full">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Deskripsi Produk</h3>
+              {product.description ? (
+                <div className="space-y-1.5">
+                  <p className={`text-sm text-foreground leading-relaxed whitespace-pre-line ${!isExpanded ? "line-clamp-3" : ""}`}>
+                    {product.description}
+                  </p>
+                  {needsToggle && (
+                    <button
+                      onClick={() => setIsExpanded(!isExpanded)}
+                      className="text-xs font-semibold text-primary hover:underline hover:text-primary/80 transition focus:outline-none"
+                    >
+                      {isExpanded ? "Sembunyikan" : "Selengkapnya"}
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Tidak ada deskripsi produk.</p>
+              )}
+            </div>
+
+            {/* Shrinkage Warning Block */}
+            {product.shrinkageWarning && (
+              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs space-y-1 w-full">
+                <span className="font-bold uppercase tracking-wider block">Peringatan Penyusutan</span>
+                <p className="leading-relaxed whitespace-pre-line">{product.shrinkageWarning}</p>
+              </div>
+            )}
 
             <button
               onClick={handleAddToCart}
-              className="mt-4 px-8 py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-base shadow-lg shadow-indigo-500/20 hover:bg-primary/95 transition disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2 group"
+              className="mt-2 px-8 py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-lg shadow-indigo-500/20 hover:bg-primary/95 transition disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2 group w-full md:w-auto"
               disabled={product.stock <= 0 || isAdding}
             >
               {isAdding ? (
                 <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Menambahkan...
                 </>
               ) : (
                 <>
-                  <ShoppingBag size={18} className="transition-transform group-hover:scale-110" />
+                  <ShoppingBag size={16} className="transition-transform group-hover:scale-110" />
                   Tambah ke Keranjang Belanja
                 </>
               )}

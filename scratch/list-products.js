@@ -7,10 +7,7 @@ mongoose.connect(MONGODB_URI)
     console.log('Connected to DB');
     const products = await mongoose.connection.db.collection('products').find({}).toArray();
     console.log('Products found:');
-    products.forEach(p => {
-      console.log(`- Product: ${p.name}`);
-      console.log(`  Images: ${JSON.stringify(p.images?.map(img => img.slice(0, 100)))}`);
-    });
+    console.log(JSON.stringify(products, null, 2));
     process.exit(0);
   })
   .catch(err => {
