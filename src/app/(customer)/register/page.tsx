@@ -72,7 +72,7 @@ export default function RegisterPage() {
         <h1 className="text-2xl font-display font-bold text-center mb-6 text-foreground tracking-wide">
           Daftar Akun Baru
         </h1>
-        
+
         {error && (
           <div className="mb-6 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 p-3 rounded-lg z-10 relative">
             {error}
@@ -97,7 +97,7 @@ export default function RegisterPage() {
               onChange={handleChange}
               required
               className="w-full px-4 py-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-foreground"
-              placeholder="John Doe"
+
             />
           </div>
 
@@ -112,7 +112,7 @@ export default function RegisterPage() {
               onChange={handleChange}
               required
               className="w-full px-4 py-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-foreground"
-              placeholder="you@example.com"
+
             />
           </div>
 
@@ -142,7 +142,7 @@ export default function RegisterPage() {
               onChange={handleChange}
               required
               className="w-full px-4 py-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-foreground"
-              placeholder="08123456789"
+
             />
           </div>
 
@@ -157,7 +157,7 @@ export default function RegisterPage() {
               required
               rows={3}
               className="w-full px-4 py-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-foreground resize-none"
-              placeholder="Jalan Mawar No 1..."
+
             />
           </div>
 
