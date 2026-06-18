@@ -59,6 +59,12 @@ export const productCreateSchema = Joi.object({
   type: Joi.string().valid("retail", "accessory").optional(),
   price: Joi.number().min(0).required(),
   stock: Joi.number().min(0).required(),
+  sizes: Joi.array().items(
+    Joi.object({
+      size: Joi.string().required(),
+      stock: Joi.number().min(0).required(),
+    })
+  ).optional(),
   sizeOptions: Joi.array().items(Joi.string()).optional(),
   shrinkageWarning: Joi.string().allow("").optional(),
   images: Joi.array().items(Joi.string()).optional(),
@@ -73,6 +79,12 @@ export const productUpdateSchema = Joi.object({
   type: Joi.string().valid("retail", "accessory").optional(),
   price: Joi.number().min(0).optional(),
   stock: Joi.number().min(0).optional(),
+  sizes: Joi.array().items(
+    Joi.object({
+      size: Joi.string().required(),
+      stock: Joi.number().min(0).required(),
+    })
+  ).optional(),
   sizeOptions: Joi.array().items(Joi.string()).optional(),
   shrinkageWarning: Joi.string().allow("").optional(),
   images: Joi.array().items(Joi.string()).optional(),

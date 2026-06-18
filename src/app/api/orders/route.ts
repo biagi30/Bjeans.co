@@ -38,11 +38,31 @@ export async function POST(request: Request) {
         if (!product) {
           return errorResponse(`Produk retail dengan ID ${item.product} tidak ditemukan.`, 404);
         }
-        if (product.stock < item.quantity) {
-          return errorResponse(
-            `Stok untuk "${product.name}" tidak mencukupi. Tersedia: ${product.stock}, diminta: ${item.quantity}.`,
-            400
-          );
+
+        const hasSizes = product.sizes && product.sizes.length > 0;
+        const selectedSize = item.customSpec?.size;
+
+        if (hasSizes && selectedSize) {
+          const sizeObj = product.sizes.find((s: any) => s.size === selectedSize);
+          if (!sizeObj) {
+            return errorResponse(
+              `Ukuran "${selectedSize}" untuk produk "${product.name}" tidak ditemukan.`,
+              400
+            );
+          }
+          if (sizeObj.stock < item.quantity) {
+            return errorResponse(
+              `Stok untuk "${product.name}" (Ukuran ${selectedSize}) tidak mencukupi. Tersedia: ${sizeObj.stock}, diminta: ${item.quantity}.`,
+              400
+            );
+          }
+        } else {
+          if (product.stock < item.quantity) {
+            return errorResponse(
+              `Stok untuk "${product.name}" tidak mencukupi. Tersedia: ${product.stock}, diminta: ${item.quantity}.`,
+              400
+            );
+          }
         }
       }
     }
@@ -53,9 +73,25 @@ export async function POST(request: Request) {
     // 3. Potong stok setelah pesanan berhasil dibuat
     for (const item of value.items) {
       if (item.itemType === "retail" && item.product) {
-        await Product.findByIdAndUpdate(item.product, {
-          $inc: { stock: -item.quantity }
-        });
+        const product = await Product.findById(item.product);
+        const hasSizes = product && product.sizes && product.sizes.length > 0;
+        const selectedSize = item.customSpec?.size;
+
+        if (hasSizes && selectedSize) {
+          await Product.updateOne(
+            { _id: item.product, "sizes.size": selectedSize },
+            {
+              $inc: {
+                "sizes.$.stock": -item.quantity,
+                stock: -item.quantity
+              }
+            }
+          );
+        } else {
+          await Product.findByIdAndUpdate(item.product, {
+            $inc: { stock: -item.quantity }
+          });
+        }
       }
     }
 

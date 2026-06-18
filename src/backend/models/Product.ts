@@ -1,5 +1,10 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
+export interface IProductSize {
+  size: string;
+  stock: number;
+}
+
 export interface IProduct extends Document {
   name: string;
   sku: string;
@@ -7,6 +12,7 @@ export interface IProduct extends Document {
   type: "retail" | "accessory";
   price: number;
   stock: number;
+  sizes?: IProductSize[];
   sizeOptions: string[];
   shrinkageWarning: string;
   images: string[];
@@ -48,6 +54,15 @@ const productSchema = new Schema<IProduct>(
       type: Number,
       default: 0,
       min: 0,
+    },
+    sizes: {
+      type: [
+        {
+          size: { type: String, required: true },
+          stock: { type: Number, default: 0, min: 0 }
+        }
+      ],
+      default: [],
     },
     sizeOptions: {
       type: [String],

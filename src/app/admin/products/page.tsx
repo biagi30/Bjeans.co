@@ -19,6 +19,7 @@ interface Product {
   category: string;
   description?: string;
   images?: string[];
+  sizes?: { size: string; stock: number }[];
 }
 
 export default function AdminProducts() {
@@ -33,6 +34,7 @@ export default function AdminProducts() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [sizes, setSizes] = useState<{ size: string; stock: number }[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
@@ -160,14 +162,21 @@ export default function AdminProducts() {
       return;
     }
     try {
+      const isAccessory = formData.category === "Accessories" || formData.category === "Aksesoris";
+      const finalSizes = isAccessory ? [] : sizes;
+      const totalStock = (!isAccessory && finalSizes.length > 0)
+        ? finalSizes.reduce((sum, s) => sum + s.stock, 0)
+        : parseInt(formData.stock) || 0;
+
       const newProduct = {
         name: formData.name,
         sku: formData.sku,
         price: priceValue,
-        stock: parseInt(formData.stock),
+        stock: totalStock,
         category: formData.category,
         description: formData.description || 'No description',
         images,
+        sizes: finalSizes,
       };
 
       const res = await fetch('/api/products', {
@@ -204,14 +213,21 @@ export default function AdminProducts() {
           toast.error('Harap masukkan harga yang valid.');
           return;
         }
+        const isAccessory = formData.category === "Accessories" || formData.category === "Aksesoris";
+        const finalSizes = isAccessory ? [] : sizes;
+        const totalStock = (!isAccessory && finalSizes.length > 0)
+          ? finalSizes.reduce((sum, s) => sum + s.stock, 0)
+          : parseInt(formData.stock) || 0;
+
         const updatedProduct = {
           name: formData.name,
           sku: formData.sku,
           price: priceValue,
-          stock: parseInt(formData.stock),
+          stock: totalStock,
           category: formData.category,
           description: formData.description,
           images,
+          sizes: finalSizes,
         };
 
         const res = await fetch(`/api/products/${editingProduct._id}`, {
@@ -263,6 +279,7 @@ export default function AdminProducts() {
 
   const openEditModal = (product: Product) => {
     setEditingProduct(product);
+    setSizes(product.sizes || []);
     setFormData({
       name: product.name,
       sku: product.sku,
@@ -316,6 +333,7 @@ export default function AdminProducts() {
               <motion.button
                 onClick={() => {
                   setEditingProduct(null);
+                  setSizes([]);
                   setFormData({ name: '', sku: '', price: '', stock: '', category: '', description: '', images: '' });
                   setShowAddModal(true);
                 }}
@@ -531,7 +549,7 @@ export default function AdminProducts() {
             transition={{ duration: 0.3 }}
           >
             <motion.div
-              className="max-w-md w-full mx-auto p-5 rounded-2xl"
+              className="max-w-lg w-full mx-auto p-5 rounded-2xl max-h-[90vh] overflow-y-auto"
               style={{
                 backgroundColor: colors.bgSecondary,
                 ...neumorph
@@ -737,9 +755,10 @@ export default function AdminProducts() {
                     <input
                       type="number"
                       required
-                      value={formData.stock}
+                      disabled={formData.category !== "Accessories" && formData.category !== "Aksesoris" && sizes.length > 0}
+                      value={formData.category !== "Accessories" && formData.category !== "Aksesoris" && sizes.length > 0 ? sizes.reduce((sum, s) => sum + s.stock, 0) : formData.stock}
                       onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl outline-none transition-all duration-300"
+                      className="w-full px-3 py-2 rounded-xl outline-none transition-all duration-300 disabled:opacity-75 disabled:cursor-not-allowed"
                       style={{
                         fontFamily: 'var(--font-space), sans-serif',
                         fontWeight: 500,
@@ -788,6 +807,160 @@ export default function AdminProducts() {
                       placeholder="Masukkan deskripsi"
                     />
                   </motion.div>
+
+                  {/* Ukuran dan Stok Celana/Pakaian (Full Width) */}
+                  {formData.category !== "Accessories" && formData.category !== "Aksesoris" && formData.category !== "" && (
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.4, delay: 0.62 }}
+                      className="col-span-2 p-3.5 rounded-xl border border-dashed flex flex-col gap-2.5"
+                      style={{ borderColor: colors.border }}
+                    >
+                      <h4 className="text-[12px] font-bold uppercase tracking-wider" style={{ color: colors.text }}>
+                        Ukuran & Stok Celana/Pakaian
+                      </h4>
+
+                      {/* Presets */}
+                      <div className="flex gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const presetSizes = ["28", "29", "30", "31", "32", "33", "34", "36", "38", "40"];
+                            const newSizes = presetSizes.map(s => {
+                              const existing = sizes.find(x => x.size === s);
+                              return { size: s, stock: existing ? existing.stock : 0 };
+                            });
+                            setSizes(newSizes);
+                          }}
+                          className="px-2.5 py-1 text-[10px] font-bold rounded-lg hover:opacity-85 transition"
+                          style={{ backgroundColor: colors.accent, color: '#FFFFFF', ...neumorph }}
+                        >
+                          Preset Celana (28-40)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const presetSizes = ["S", "M", "L", "XL", "XXL"];
+                            const newSizes = presetSizes.map(s => {
+                              const existing = sizes.find(x => x.size === s);
+                              return { size: s, stock: existing ? existing.stock : 0 };
+                            });
+                            setSizes(newSizes);
+                          }}
+                          className="px-2.5 py-1 text-[10px] font-bold rounded-lg hover:opacity-85 transition"
+                          style={{ backgroundColor: colors.accent, color: '#FFFFFF', ...neumorph }}
+                        >
+                          Preset Baju (S-XXL)
+                        </button>
+                      </div>
+
+                      {/* Comma-separated Input */}
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="text"
+                          id="quick-add-sizes"
+                          placeholder="Tambah banyak ukuran, pisahkan koma (contoh: 28, 29, 30)"
+                          className="flex-1 px-3 py-2 rounded-xl outline-none text-[12px]"
+                          style={{
+                            fontFamily: 'var(--font-space), sans-serif',
+                            fontWeight: 500,
+                            backgroundColor: colors.bg,
+                            color: colors.text,
+                            border: `2px solid ${colors.border}`,
+                            ...neumorphInset
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const val = (e.currentTarget as HTMLInputElement).value;
+                              if (val.trim()) {
+                                const parsed = val.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+                                const updated = [...sizes];
+                                parsed.forEach(s => {
+                                  if (!updated.some(x => x.size === s)) {
+                                    updated.push({ size: s, stock: 0 });
+                                  }
+                                });
+                                setSizes(updated);
+                                (e.currentTarget as HTMLInputElement).value = '';
+                              }
+                            }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const inputEl = document.getElementById('quick-add-sizes') as HTMLInputElement;
+                            const val = inputEl?.value;
+                            if (val?.trim()) {
+                              const parsed = val.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+                              const updated = [...sizes];
+                              parsed.forEach(s => {
+                                if (!updated.some(x => x.size === s)) {
+                                  updated.push({ size: s, stock: 0 });
+                                }
+                              });
+                              setSizes(updated);
+                              inputEl.value = '';
+                            }
+                          }}
+                          className="px-4 py-2 text-[12px] font-bold rounded-xl hover:opacity-85 transition shrink-0"
+                          style={{ backgroundColor: colors.accent, color: '#FFFFFF', ...neumorph }}
+                        >
+                          Tambah
+                        </button>
+                      </div>
+
+                      {/* Sizes list with stocks */}
+                      {sizes.length > 0 ? (
+                        <div className="max-h-[160px] overflow-y-auto pr-1 flex flex-col gap-2 border-t pt-2 mt-1" style={{ borderColor: colors.border }}>
+                          {sizes.map((sz, idx) => (
+                            <div key={sz.size} className="flex items-center justify-between gap-3 bg-black/5 p-1.5 rounded-lg">
+                              <span className="text-[12px] font-bold ml-1" style={{ color: colors.text }}>
+                                Ukuran {sz.size}
+                              </span>
+                              <div className="flex items-center gap-3">
+                                <span className="text-[10px]" style={{ color: colors.textSecondary }}>Stok:</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  required
+                                  value={sz.stock}
+                                  onChange={(e) => {
+                                    const val = parseInt(e.target.value) || 0;
+                                    const updated = [...sizes];
+                                    updated[idx].stock = val;
+                                    setSizes(updated);
+                                  }}
+                                  className="w-16 px-2 py-1 rounded-lg border outline-none text-center text-xs"
+                                  style={{
+                                    backgroundColor: colors.bg,
+                                    color: colors.text,
+                                    borderColor: colors.border,
+                                    ...neumorphInset
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSizes(sizes.filter(x => x.size !== sz.size));
+                                  }}
+                                  className="text-red-500 hover:text-red-700 font-bold text-xs mr-1"
+                                >
+                                  Hapus
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-[11px] italic text-center py-2" style={{ color: colors.textSecondary }}>
+                          Belum ada ukuran yang ditambahkan. Gunakan preset atau ketik manual di atas.
+                        </p>
+                      )}
+                    </motion.div>
+                  )}
 
                   {/* Upload Images (Full Width) */}
                   <motion.div

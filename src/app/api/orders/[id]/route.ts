@@ -91,9 +91,25 @@ export async function DELETE(
     if (order.paymentStatus === "unpaid") {
       for (const item of order.items) {
         if (item.itemType === "retail" && item.product) {
-          await Product.findByIdAndUpdate(item.product, {
-            $inc: { stock: item.quantity }
-          });
+          const product = await Product.findById(item.product);
+          const hasSizes = product && product.sizes && product.sizes.length > 0;
+          const selectedSize = item.customSpec?.size;
+
+          if (hasSizes && selectedSize) {
+            await Product.updateOne(
+              { _id: item.product, "sizes.size": selectedSize },
+              {
+                $inc: {
+                  "sizes.$.stock": item.quantity,
+                  stock: item.quantity
+                }
+              }
+            );
+          } else {
+            await Product.findByIdAndUpdate(item.product, {
+              $inc: { stock: item.quantity }
+            });
+          }
         }
       }
     }

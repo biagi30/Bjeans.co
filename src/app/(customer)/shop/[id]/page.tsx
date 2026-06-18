@@ -18,6 +18,7 @@ interface Product {
   images: string[];
   shrinkageWarning?: string;
   sizeOptions?: string[];
+  sizes?: { size: string; stock: number }[];
 }
 
 export default function ProductDetailPage() {
@@ -106,14 +107,29 @@ export default function ProductDetailPage() {
       ((!item.customSpec && !selectedSize) || (item.customSpec?.size === selectedSize))
     );
 
+    let maxStock = product.stock;
+    if (product.sizes && product.sizes.length > 0 && selectedSize) {
+      const sizeObj = product.sizes.find(s => s.size === selectedSize);
+      if (sizeObj) {
+        maxStock = sizeObj.stock;
+      } else {
+        maxStock = 0;
+      }
+    }
+
     if (existingIndex > -1) {
-      if (cart[existingIndex].quantity >= product.stock) {
-        toast.error(`Anda tidak dapat menambahkan lebih dari ${product.stock} unit ke dalam keranjang (batas stok maksimum).`);
+      if (cart[existingIndex].quantity >= maxStock) {
+        toast.error(`Anda tidak dapat menambahkan lebih dari ${maxStock} unit ke dalam keranjang (batas stok maksimum).`);
         setIsAdding(false);
         return;
       }
       cart[existingIndex].quantity = cart[existingIndex].quantity + 1;
     } else {
+      if (maxStock <= 0) {
+        toast.error("Maaf, stok untuk ukuran terpilih sudah habis.");
+        setIsAdding(false);
+        return;
+      }
       cart.push(cartItem);
     }
 
@@ -265,30 +281,60 @@ export default function ProductDetailPage() {
                     {product.category === "Jeans" ? "Pilih Ukuran Celana" : "Pilih Ukuran Pakaian"}
                   </h3>
                   {selectedSize && (
-                    <span className="text-[10px] font-semibold text-primary">Terpilih: Ukuran {selectedSize}</span>
+                    <span className="text-[10px] font-semibold text-primary">
+                      Terpilih: Ukuran {selectedSize} {product.sizes && product.sizes.find(s => s.size === selectedSize)?.stock === 0 && "(Habis)"}
+                    </span>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {(product.sizeOptions && product.sizeOptions.length > 0
-                    ? product.sizeOptions
-                    : (product.category === "Jeans"
-                      ? ["28", "29", "30", "31", "32", "33", "34", "36", "38", "40"]
-                      : ["S", "M", "L", "XL", "XXL"]
-                    )
-                  ).map((size) => (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => setSelectedSize(size)}
-                      className={`h-8 min-w-[32px] px-2 rounded-lg border font-bold text-[11px] transition-all duration-200 flex items-center justify-center ${
-                        selectedSize === size
-                          ? "bg-primary border-primary text-primary-foreground shadow-md shadow-indigo-500/20 scale-[1.05]"
-                          : "border-border/60 hover:border-primary/55 bg-background/40 hover:bg-background/80"
-                      }`}
-                    >
-                      {size}
-                    </button>
-                  ))}
+                  {product.sizes && product.sizes.length > 0 ? (
+                    product.sizes.map((sizeObj) => {
+                      const isOutOfStock = sizeObj.stock <= 0;
+                      return (
+                        <button
+                          key={sizeObj.size}
+                          type="button"
+                          disabled={isOutOfStock}
+                          onClick={() => setSelectedSize(sizeObj.size)}
+                          className={`h-8 min-w-[32px] px-2 rounded-lg border font-bold text-[11px] transition-all duration-200 flex items-center justify-center relative ${
+                            selectedSize === sizeObj.size
+                              ? "bg-primary border-primary text-primary-foreground shadow-md shadow-indigo-500/20 scale-[1.05]"
+                              : isOutOfStock
+                              ? "border-dashed border-border/20 opacity-40 cursor-not-allowed bg-muted text-muted-foreground"
+                              : "border-border/60 hover:border-primary/55 bg-background/40 hover:bg-background/80"
+                          }`}
+                        >
+                          {sizeObj.size}
+                          {isOutOfStock && (
+                            <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })
+                  ) : (
+                    (product.sizeOptions && product.sizeOptions.length > 0
+                      ? product.sizeOptions
+                      : (product.category === "Jeans"
+                        ? ["28", "29", "30", "31", "32", "33", "34", "36", "38", "40"]
+                        : ["S", "M", "L", "XL", "XXL"]
+                      )
+                    ).map((size) => (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => setSelectedSize(size)}
+                        className={`h-8 min-w-[32px] px-2 rounded-lg border font-bold text-[11px] transition-all duration-200 flex items-center justify-center ${
+                          selectedSize === size
+                            ? "bg-primary border-primary text-primary-foreground shadow-md shadow-indigo-500/20 scale-[1.05]"
+                            : "border-border/60 hover:border-primary/55 bg-background/40 hover:bg-background/80"
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))
+                  )}
                 </div>
               </div>
             )}

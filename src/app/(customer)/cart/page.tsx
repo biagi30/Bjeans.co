@@ -124,7 +124,16 @@ export default function CartPage() {
             const productId = parts[1];
             const foundProduct = products.find((p) => p._id === productId);
             if (foundProduct) {
-              maxStock = foundProduct.stock;
+              if (foundProduct.sizes && foundProduct.sizes.length > 0 && item.customSpec?.size) {
+                const sizeObj = foundProduct.sizes.find((s: any) => s.size === item.customSpec.size);
+                if (sizeObj) {
+                  maxStock = sizeObj.stock;
+                } else {
+                  maxStock = 0;
+                }
+              } else {
+                maxStock = foundProduct.stock;
+              }
             }
           }
         }
@@ -222,7 +231,16 @@ export default function CartPage() {
                     const productId = parts[1];
                     const foundProduct = products.find((p) => p._id === productId);
                     if (foundProduct) {
-                      maxStock = foundProduct.stock;
+                      if (foundProduct.sizes && foundProduct.sizes.length > 0 && item.customSpec?.size) {
+                        const sizeObj = foundProduct.sizes.find((s: any) => s.size === item.customSpec.size);
+                        if (sizeObj) {
+                          maxStock = sizeObj.stock;
+                        } else {
+                          maxStock = 0;
+                        }
+                      } else {
+                        maxStock = foundProduct.stock;
+                      }
                     }
                   }
                 }
