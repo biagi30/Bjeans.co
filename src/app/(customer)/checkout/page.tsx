@@ -424,6 +424,11 @@ export default function CheckoutPage() {
                     </div>
                     <div className="flex-grow space-y-1">
                       <h3 className="font-semibold text-sm text-foreground">{item.name}</h3>
+                      {item.type === "retail" && item.customSpec?.size && (
+                        <p className="text-xs text-muted-foreground">
+                          Ukuran: {item.customSpec.size}
+                        </p>
+                      )}
                       <div className="flex justify-between items-center text-xs">
                         <span className="text-muted-foreground">Jumlah: {item.quantity}x</span>
                         <span className="font-bold">{formatIDR(item.price * item.quantity)}</span>

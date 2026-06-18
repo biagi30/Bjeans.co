@@ -986,7 +986,14 @@ export default function AdminOrders() {
                   {selectedOrder.items?.map((item, i) => (
                     <div key={i} className="flex justify-between items-center py-2 border-b border-border/30">
                       <div className="text-sm">
-                        <span className="font-semibold text-foreground">{item.quantity}x</span> {item.name || item.product?.name || 'Produk Tidak Dikenal'}
+                        <div>
+                          <span className="font-semibold text-foreground">{item.quantity}x</span> {item.name || item.product?.name || 'Produk Tidak Dikenal'}
+                        </div>
+                        {item.itemType === "retail" && item.customSpec?.size && (
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            Ukuran: {item.customSpec.size}
+                          </div>
+                        )}
                       </div>
                       <div className="text-sm font-semibold">
                         Rp{(item.totalPrice || item.unitPrice * item.quantity).toLocaleString('id-ID')}

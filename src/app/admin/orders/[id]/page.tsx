@@ -553,6 +553,11 @@ export default function OrderDetailPage() {
                         <h4 className="text-base font-bold" style={{ color: colors.text }}>
                           {item.name || item.product?.name || "Premium Denim Product"}
                         </h4>
+                        {item.itemType === "retail" && item.customSpec?.size && (
+                          <p className="text-xs font-semibold text-muted-foreground mt-1">
+                            Ukuran: {item.customSpec.size}
+                          </p>
+                        )}
                         <p className="text-xs text-muted-foreground">
                           Harga Satuan: Rp{item.unitPrice.toLocaleString("id-ID")}
                         </p>

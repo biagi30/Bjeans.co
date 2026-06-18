@@ -650,6 +650,11 @@ export default function ProfilePage() {
                                 <div className="flex justify-between items-start gap-4">
                                   <div>
                                     <p className="font-semibold text-sm text-foreground">{item.name}</p>
+                                    {item.itemType === "retail" && item.customSpec?.size && (
+                                      <p className="text-xs font-semibold text-muted-foreground mt-0.5">
+                                        Ukuran: {item.customSpec.size}
+                                      </p>
+                                    )}
                                     <p className="text-xs text-muted-foreground mt-0.5">
                                       {item.quantity}x @ {formatIDR(item.unitPrice)}
                                     </p>

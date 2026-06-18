@@ -17,6 +17,7 @@ interface Product {
   category: string;
   images: string[];
   shrinkageWarning?: string;
+  sizeOptions?: string[];
 }
 
 export default function ProductDetailPage() {
@@ -33,6 +34,7 @@ export default function ProductDetailPage() {
   const [cartKey, setCartKey] = useState<string>("bjeans_cart_guest");
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedSize, setSelectedSize] = useState<string>("");
 
   useEffect(() => {
     async function fetchUser() {
@@ -75,6 +77,13 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = () => {
     if (!product) return;
+
+    const needsSize = product.category !== "Accessories" && product.category !== "Aksesoris";
+    if (needsSize && !selectedSize) {
+      toast.error("Silakan pilih ukuran terlebih dahulu sebelum menambahkan ke keranjang.");
+      return;
+    }
+
     setIsAdding(true);
 
     const cartItem = {
@@ -83,7 +92,7 @@ export default function ProductDetailPage() {
       price: product.price,
       quantity: 1,
       type: "retail",
-      customSpec: null,
+      customSpec: selectedSize ? { size: selectedSize } : null,
       image: product.images && product.images.length > 0 ? product.images[0] : null
     };
 
@@ -92,7 +101,9 @@ export default function ProductDetailPage() {
     if (!Array.isArray(cart)) cart = [];
 
     const existingIndex = cart.findIndex((item: any) => 
-      item.type === "retail" && item.id.split("-")[1] === product._id
+      item.type === "retail" && 
+      item.id.split("-")[1] === product._id &&
+      ((!item.customSpec && !selectedSize) || (item.customSpec?.size === selectedSize))
     );
 
     if (existingIndex > -1) {
@@ -199,66 +210,102 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Right Column: Title, Category, Price, Stock, Description, Warnings & Add to Cart button */}
-          <div className="flex-grow flex-1 flex flex-col gap-5 justify-start w-full">
+          <div className="flex-grow flex-1 flex flex-col gap-3.5 justify-start w-full">
             <div>
-              <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider border border-primary/20 mb-2.5">
+              <span className="inline-block px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-wider border border-primary/20 mb-1.5">
                 {product.category}
               </span>
-              <h1 className="text-2xl md:text-3xl font-display font-semibold leading-tight text-foreground">{product.name}</h1>
+              <h1 className="text-xl md:text-2xl font-display font-semibold leading-tight text-foreground">{product.name}</h1>
             </div>
 
-            <div className="flex items-center gap-4 py-2 border-y border-border/30">
-              <span className="text-xl md:text-2xl font-bold text-primary">Rp{product.price.toLocaleString('id-ID')}</span>
+            <div className="flex items-center gap-3 py-1.5 border-y border-border/30">
+              <span className="text-lg md:text-xl font-bold text-primary">Rp{product.price.toLocaleString('id-ID')}</span>
               {product.stock > 0 ? (
-                <span className="px-2.5 py-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/20 text-xs font-semibold">Stok: {product.stock} Tersedia</span>
+                <span className="px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/20 text-[10px] font-semibold">Stok: {product.stock} Tersedia</span>
               ) : (
-                <span className="px-2.5 py-0.5 rounded-full bg-red-500/10 text-red-500 border border-red-500/20 text-xs font-semibold">Stok Habis</span>
+                <span className="px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 border border-red-500/20 text-[10px] font-semibold">Stok Habis</span>
               )}
             </div>
 
             {/* Structured Description Block with Expander */}
-            <div className="space-y-2 p-4 rounded-xl bg-white/5 border border-border/40 w-full">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Deskripsi Produk</h3>
+            <div className="space-y-1.5 p-3 rounded-xl bg-white/5 border border-border/40 w-full text-xs">
+              <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Deskripsi Produk</h3>
               {product.description ? (
-                <div className="space-y-1.5">
-                  <p className={`text-sm text-foreground leading-relaxed whitespace-pre-line ${!isExpanded ? "line-clamp-3" : ""}`}>
+                <div className="space-y-1">
+                  <p className={`text-xs text-foreground leading-relaxed whitespace-pre-line ${!isExpanded ? "line-clamp-2" : "max-h-[90px] overflow-y-auto pr-1 custom-scrollbar"}`}>
                     {product.description}
                   </p>
                   {needsToggle && (
                     <button
                       onClick={() => setIsExpanded(!isExpanded)}
-                      className="text-xs font-semibold text-primary hover:underline hover:text-primary/80 transition focus:outline-none"
+                      className="text-[10px] font-semibold text-primary hover:underline hover:text-primary/80 transition focus:outline-none block"
                     >
                       {isExpanded ? "Sembunyikan" : "Selengkapnya"}
                     </button>
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Tidak ada deskripsi produk.</p>
+                <p className="text-xs text-muted-foreground">Tidak ada deskripsi produk.</p>
               )}
             </div>
 
             {/* Shrinkage Warning Block */}
             {product.shrinkageWarning && (
-              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs space-y-1 w-full">
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] space-y-0.5 w-full">
                 <span className="font-bold uppercase tracking-wider block">Peringatan Penyusutan</span>
                 <p className="leading-relaxed whitespace-pre-line">{product.shrinkageWarning}</p>
               </div>
             )}
 
+            {/* Size Selector */}
+            {product.category !== "Accessories" && product.category !== "Aksesoris" && (
+              <div className="space-y-2 p-3 rounded-xl bg-white/5 border border-border/40 w-full">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {product.category === "Jeans" ? "Pilih Ukuran Celana" : "Pilih Ukuran Pakaian"}
+                  </h3>
+                  {selectedSize && (
+                    <span className="text-[10px] font-semibold text-primary">Terpilih: Ukuran {selectedSize}</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {(product.sizeOptions && product.sizeOptions.length > 0
+                    ? product.sizeOptions
+                    : (product.category === "Jeans"
+                      ? ["28", "29", "30", "31", "32", "33", "34", "36", "38", "40"]
+                      : ["S", "M", "L", "XL", "XXL"]
+                    )
+                  ).map((size) => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => setSelectedSize(size)}
+                      className={`h-8 min-w-[32px] px-2 rounded-lg border font-bold text-[11px] transition-all duration-200 flex items-center justify-center ${
+                        selectedSize === size
+                          ? "bg-primary border-primary text-primary-foreground shadow-md shadow-indigo-500/20 scale-[1.05]"
+                          : "border-border/60 hover:border-primary/55 bg-background/40 hover:bg-background/80"
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <button
               onClick={handleAddToCart}
-              className="mt-2 px-8 py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm shadow-lg shadow-indigo-500/20 hover:bg-primary/95 transition disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2 group w-full md:w-auto"
+              className="mt-1 px-8 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-xs shadow-lg shadow-indigo-500/20 hover:bg-primary/95 transition disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2 group w-full"
               disabled={product.stock <= 0 || isAdding}
             >
               {isAdding ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   Menambahkan...
                 </>
               ) : (
                 <>
-                  <ShoppingBag size={16} className="transition-transform group-hover:scale-110" />
+                  <ShoppingBag size={14} className="transition-transform group-hover:scale-110" />
                   Tambah ke Keranjang Belanja
                 </>
               )}

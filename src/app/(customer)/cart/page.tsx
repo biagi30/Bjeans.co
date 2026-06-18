@@ -17,12 +17,13 @@ interface CartItem {
   type: "retail" | "custom";
   image?: string | null;
   customSpec?: {
-    fabricName: string;
-    fabricWeight: string;
-    fabricColor: string;
-    fitName: string;
-    sizeMode: "standard" | "bespoke";
-    sizing: {
+    size?: string;
+    fabricName?: string;
+    fabricWeight?: string;
+    fabricColor?: string;
+    fitName?: string;
+    sizeMode?: "standard" | "bespoke";
+    sizing?: {
       waist: number;
       inseam: number;
       thigh?: number;
@@ -262,6 +263,11 @@ export default function CartPage() {
                                 <Sparkles size={8} /> Bespoke
                               </span>
                             )}
+                            {item.type === "retail" && item.customSpec?.size && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary border border-primary/20">
+                                Ukuran: {item.customSpec.size}
+                              </span>
+                            )}
                           </div>
                         </div>
                         
@@ -274,7 +280,7 @@ export default function CartPage() {
                         </button>
                       </div>
 
-                      {item.type === "custom" && item.customSpec && (
+                      {item.type === "custom" && item.customSpec && item.customSpec.sizing && (
                         <div className="bg-surface-elevated/60 rounded-xl p-3 border border-border/30 text-xs space-y-1.5 mt-2">
                           <div className="grid grid-cols-2 gap-2 text-muted-foreground">
                             <div>Kain: <span className="font-semibold text-foreground">{item.customSpec.fabricName} ({item.customSpec.fabricWeight})</span></div>
