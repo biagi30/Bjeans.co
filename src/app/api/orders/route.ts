@@ -39,10 +39,9 @@ export async function POST(request: Request) {
           return errorResponse(`Produk retail dengan ID ${item.product} tidak ditemukan.`, 404);
         }
 
-        const hasSizes = product.sizes && product.sizes.length > 0;
         const selectedSize = item.customSpec?.size;
 
-        if (hasSizes && selectedSize) {
+        if (product.sizes && product.sizes.length > 0 && selectedSize) {
           const sizeObj = product.sizes.find((s: any) => s.size === selectedSize);
           if (!sizeObj) {
             return errorResponse(

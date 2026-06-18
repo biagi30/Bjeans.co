@@ -124,8 +124,9 @@ export default function CartPage() {
             const productId = parts[1];
             const foundProduct = products.find((p) => p._id === productId);
             if (foundProduct) {
-              if (foundProduct.sizes && foundProduct.sizes.length > 0 && item.customSpec?.size) {
-                const sizeObj = foundProduct.sizes.find((s: any) => s.size === item.customSpec.size);
+              const sizeName = item.customSpec?.size;
+              if (foundProduct.sizes && foundProduct.sizes.length > 0 && sizeName) {
+                const sizeObj = foundProduct.sizes.find((s: any) => s.size === sizeName);
                 if (sizeObj) {
                   maxStock = sizeObj.stock;
                 } else {
@@ -231,8 +232,9 @@ export default function CartPage() {
                     const productId = parts[1];
                     const foundProduct = products.find((p) => p._id === productId);
                     if (foundProduct) {
-                      if (foundProduct.sizes && foundProduct.sizes.length > 0 && item.customSpec?.size) {
-                        const sizeObj = foundProduct.sizes.find((s: any) => s.size === item.customSpec.size);
+                      const sizeName = item.customSpec?.size;
+                      if (foundProduct.sizes && foundProduct.sizes.length > 0 && sizeName) {
+                        const sizeObj = foundProduct.sizes.find((s: any) => s.size === sizeName);
                         if (sizeObj) {
                           maxStock = sizeObj.stock;
                         } else {
@@ -281,7 +283,7 @@ export default function CartPage() {
                                 <Sparkles size={8} /> Bespoke
                               </span>
                             )}
-                            {item.type === "retail" && item.customSpec?.size && (
+                            {item.type === "retail" && item.customSpec && item.customSpec.size && (
                               <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary border border-primary/20">
                                 Ukuran: {item.customSpec.size}
                               </span>
