@@ -6,6 +6,10 @@ import {
   isValidObjectId,
 } from "@/backend/utils/validate";
 import { successResponse, errorResponse } from "@/backend/utils/apiResponse";
+import {
+  kirimNotifikasiPesananDikirim,
+  kirimNotifikasiPesananSelesai,
+} from "@/backend/services/whatsappService";
 
 export async function GET(
   request: Request,
@@ -61,6 +65,33 @@ export async function PATCH(
 
     if (!order) {
       return errorResponse("Order not found", 404);
+    }
+
+    // ─── Kirim Notifikasi WhatsApp (fire-and-forget) ───
+    // Hanya kirim jika status berubah ke "shipped" atau "done" dan customer punya nomor telepon
+    if (value.status && order.customer && (order.customer as any).phone) {
+      const customer = order.customer as any;
+      const orderData = {
+        orderNumber: order.orderNumber,
+        customerName: customer.name || "Pelanggan",
+        items: order.items.map((item: any) => ({
+          name: item.name,
+          quantity: item.quantity,
+          totalPrice: item.totalPrice,
+        })),
+        totalAmount: order.totalAmount,
+        shippingAddress: order.shippingAddress,
+      };
+
+      if (value.status === "shipped") {
+        kirimNotifikasiPesananDikirim(customer.phone, orderData).catch((err) =>
+          console.error("[WhatsApp] Gagal kirim notifikasi pesanan dikirim:", err.message)
+        );
+      } else if (value.status === "done") {
+        kirimNotifikasiPesananSelesai(customer.phone, orderData).catch((err) =>
+          console.error("[WhatsApp] Gagal kirim notifikasi pesanan selesai:", err.message)
+        );
+      }
     }
 
     return successResponse(order);
