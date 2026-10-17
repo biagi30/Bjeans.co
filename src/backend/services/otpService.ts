@@ -63,12 +63,12 @@ export async function sendWhatsAppOTP(payload: {
 }
 
 /**
- * Kirim OTP ke pengguna (otomatis WhatsApp jika ada phone, fallback ke Email)
+ * Kirim OTP ke pengguna (langsung via Email)
  */
 export async function kirimOTP(
   email: string,
   namaUser: string = "Pengguna",
-  phone?: string
+  _phone?: string
 ): Promise<{ success: boolean; message: string; channel?: string }> {
   const otp = generateOTP();
   const expiresAt = Date.now() + 5 * 60 * 1000; // 5 menit
@@ -85,52 +85,30 @@ export async function kirimOTP(
     };
   }
 
-  let sentViaWhatsApp = false;
-
-  // Coba kirim via WhatsApp jika nomor HP tersedia
-  if (phone) {
-    try {
-      await sendWhatsAppOTP({
-        to: phone,
-        nama: namaUser,
+  // Kirim langsung via Email
+  try {
+    await sendEmail({
+      to: email,
+      templateCode: "otp_login",
+      variables: {
         otp,
-      });
-      sentViaWhatsApp = true;
-    } catch (waErr: any) {
-      console.warn(
-        `[OTP Service] WhatsApp OTP gagal (${waErr.message}), beralih ke Email...`
-      );
-    }
-  }
+        nama: namaUser,
+      },
+    });
 
-  // Jika belum terkirim via WhatsApp, kirim via Email
-  if (!sentViaWhatsApp) {
-    try {
-      await sendEmail({
-        to: email,
-        templateCode: "otp_login",
-        variables: {
-          otp,
-          nama: namaUser,
-        },
-      });
-    } catch (emailErr: any) {
-      console.error(
-        `[OTP Service] Pengiriman OTP gagal: ${emailErr.message}. Fallback OTP untuk ${email}: ${otp}`
-      );
-      throw new Error(
-        `Gagal mengirim OTP: ${emailErr.message}. Pastikan NGW_API_KEY valid di environment variables.`
-      );
-    }
+    return {
+      success: true,
+      message: "OTP telah dikirim ke email kamu",
+      channel: "email",
+    };
+  } catch (emailErr: any) {
+    console.error(
+      `[OTP Service] Pengiriman OTP email gagal: ${emailErr.message}. Fallback OTP untuk ${email}: ${otp}`
+    );
+    throw new Error(
+      `Gagal mengirim OTP: ${emailErr.message}. Pastikan NGW_API_KEY valid di environment variables.`
+    );
   }
-
-  return {
-    success: true,
-    message: sentViaWhatsApp
-      ? "OTP telah dikirim ke WhatsApp kamu"
-      : "OTP telah dikirim ke email kamu",
-    channel: sentViaWhatsApp ? "whatsapp" : "email",
-  };
 }
 
 /**

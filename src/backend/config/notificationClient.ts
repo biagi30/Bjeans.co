@@ -157,7 +157,7 @@ export function getNotificationClient(): NotificationClient {
       process.env.NOTIFICATION_BASE_URL ||
       NGW_DEFAULT_BASE_URL;
 
-    const timeout = Number(process.env.NGW_TIMEOUT) || 10000;
+    const timeout = Number(process.env.NGW_TIMEOUT) || 20000;
 
     if (!apiKey) {
       console.warn(
