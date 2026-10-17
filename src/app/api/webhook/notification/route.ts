@@ -118,16 +118,17 @@ export async function POST(request: NextRequest) {
       if (recipient) updateData.recipient = recipient;
       if (channel) updateData.channel = channel;
 
+      const setOnInsertData: Record<string, any> = {
+        createdAt: new Date(),
+      };
+      if (!recipient) setOnInsertData.recipient = "UNKNOWN";
+      if (!channel) setOnInsertData.channel = "UNKNOWN";
+
       updatedLog = await NotificationLog.findOneAndUpdate(
         { messageId },
         {
           $set: updateData,
-          $setOnInsert: {
-            messageId,
-            channel: channel || "UNKNOWN",
-            recipient: recipient || "UNKNOWN",
-            createdAt: new Date(),
-          },
+          $setOnInsert: setOnInsertData,
         },
         { new: true, upsert: true }
       );
