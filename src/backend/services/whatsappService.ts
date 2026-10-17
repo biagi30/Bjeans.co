@@ -9,13 +9,30 @@ const NGW_TIMEOUT = Number(process.env.NGW_TIMEOUT) || 10000;
 
 /**
  * Kirim pesan WhatsApp via Notification Gateway REST API
+ *
+ * Mendukung 2 mode (pola yang sama dengan otpService.ts):
+ * 1. Template mode — kirim { templateCode, variables } (seperti template "otp_login" di OTP login)
+ * 2. Raw body mode — kirim { body } langsung (fallback jika template belum dibuat di dashboard NGW)
  */
 async function sendWhatsApp(payload: {
   to: string;
-  body: string;
+  body?: string;
+  templateCode?: string;
+  variables?: Record<string, string>;
 }): Promise<void> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), NGW_TIMEOUT);
+
+  const requestBody: Record<string, any> = {
+    channel: "WHATSAPP",
+    recipient: payload.to,
+  };
+  if (payload.templateCode) {
+    requestBody.templateCode = payload.templateCode;
+    requestBody.variables = payload.variables ?? {};
+  } else {
+    requestBody.body = payload.body;
+  }
 
   try {
     const res = await fetch(`${NGW_BASE_URL}/v1/notifications/send`, {
@@ -24,11 +41,7 @@ async function sendWhatsApp(payload: {
         "Content-Type": "application/json",
         "x-api-key": NGW_API_KEY,
       },
-      body: JSON.stringify({
-        channel: "WHATSAPP",
-        recipient: payload.to,
-        body: payload.body,
-      }),
+      body: JSON.stringify(requestBody),
       signal: controller.signal,
     });
 
@@ -67,6 +80,33 @@ function formatItemsSummary(items: any[]): string {
     .join("\n");
 }
 
+// ─── Helper: Bangun variabel untuk template NGW ───
+// Placeholder harus sama persis dengan yang dipakai di template dashboard NGW.
+// NGW akan me-render {{nama}}, {{nomor_pesanan}}, {{detail_pesanan}}, {{total}}, {{alamat}}
+// dengan nilai dari objek di bawah ini (mekanisme sama persis seperti template "otp_login").
+function buildTemplateVariables(order: OrderNotificationData): Record<string, string> {
+  return {
+    nama: order.customerName,
+    nomor_pesanan: order.orderNumber,
+    detail_pesanan: formatItemsSummary(order.items),
+    total: formatRupiah(order.totalAmount),
+    alamat: order.shippingAddress ?? "-",
+  };
+}
+
+/**
+ * Kirim notifikasi WhatsApp memakai template Notification Gateway
+ * (mekanisme sama persis seperti "otp_login" di otpService.ts,
+ * hanya beda channel: WHATSAPP vs EMAIL).
+ */
+async function sendWhatsAppWithTemplate(
+  phone: string,
+  templateCode: string,
+  variables: Record<string, string>
+): Promise<void> {
+  await sendWhatsApp({ to: phone, templateCode, variables });
+}
+
 // ─── Interfaces ───
 interface OrderNotificationData {
   orderNumber: string;
@@ -81,7 +121,29 @@ interface OrderNotificationData {
 }
 
 /**
+ * Kirim notifikasi WhatsApp: Pesanan sedang diproses (processing)
+ * Isi pesan diambil dari template "order_processing" di dashboard NGW.
+ */
+export async function kirimNotifikasiPesananDiproses(
+  phone: string,
+  order: OrderNotificationData
+): Promise<void> {
+  const formattedPhone = formatPhoneNumber(phone);
+  if (!formattedPhone) {
+    console.warn(`[WhatsApp] Nomor telepon tidak valid, skip notifikasi: "${phone}"`);
+    return;
+  }
+
+  await sendWhatsAppWithTemplate(
+    formattedPhone,
+    "order_processing",
+    buildTemplateVariables(order)
+  );
+}
+
+/**
  * Kirim notifikasi WhatsApp: Pesanan sudah dikirim (shipped)
+ * Isi pesan diambil dari template "order_shipped" di dashboard NGW.
  */
 export async function kirimNotifikasiPesananDikirim(
   phone: string,
@@ -93,29 +155,16 @@ export async function kirimNotifikasiPesananDikirim(
     return;
   }
 
-  const message = [
-    `📦 *Pesanan Anda Sedang Dikirim!*`,
-    ``,
-    `Halo ${order.customerName},`,
-    ``,
-    `Pesanan Anda dengan nomor *${order.orderNumber}* telah dikirim dan sedang dalam perjalanan menuju alamat Anda.`,
-    ``,
-    `🧾 *Detail Pesanan:*`,
-    formatItemsSummary(order.items),
-    ``,
-    `💰 *Total:* ${formatRupiah(order.totalAmount)}`,
-    order.shippingAddress ? `📍 *Alamat:* ${order.shippingAddress}` : "",
-    ``,
-    `Terima kasih telah berbelanja di *Bjeans.co*! 🙏`,
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-  await sendWhatsApp({ to: formattedPhone, body: message });
+  await sendWhatsAppWithTemplate(
+    formattedPhone,
+    "order_shipped",
+    buildTemplateVariables(order)
+  );
 }
 
 /**
  * Kirim notifikasi WhatsApp: Pesanan selesai (done)
+ * Isi pesan diambil dari template "order_done" di dashboard NGW.
  */
 export async function kirimNotifikasiPesananSelesai(
   phone: string,
@@ -127,21 +176,9 @@ export async function kirimNotifikasiPesananSelesai(
     return;
   }
 
-  const message = [
-    `✅ *Pesanan Anda Telah Selesai!*`,
-    ``,
-    `Halo ${order.customerName},`,
-    ``,
-    `Pesanan Anda dengan nomor *${order.orderNumber}* telah selesai diproses.`,
-    ``,
-    `🧾 *Detail Pesanan:*`,
-    formatItemsSummary(order.items),
-    ``,
-    `💰 *Total:* ${formatRupiah(order.totalAmount)}`,
-    ``,
-    `Kami harap Anda puas dengan produk dari *Bjeans.co*! ⭐`,
-    `Jika ada pertanyaan atau kendala, jangan ragu untuk menghubungi kami.`,
-  ].join("\n");
-
-  await sendWhatsApp({ to: formattedPhone, body: message });
+  await sendWhatsAppWithTemplate(
+    formattedPhone,
+    "order_done",
+    buildTemplateVariables(order)
+  );
 }

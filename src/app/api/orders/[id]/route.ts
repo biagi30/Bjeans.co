@@ -7,6 +7,7 @@ import {
 } from "@/backend/utils/validate";
 import { successResponse, errorResponse } from "@/backend/utils/apiResponse";
 import {
+  kirimNotifikasiPesananDiproses,
   kirimNotifikasiPesananDikirim,
   kirimNotifikasiPesananSelesai,
 } from "@/backend/services/whatsappService";
@@ -68,7 +69,7 @@ export async function PATCH(
     }
 
     // ─── Kirim Notifikasi WhatsApp (fire-and-forget) ───
-    // Hanya kirim jika status berubah ke "shipped" atau "done" dan customer punya nomor telepon
+    // Hanya kirim jika status berubah ke "processing", "shipped", atau "done" dan customer punya nomor telepon
     if (value.status && order.customer && (order.customer as any).phone) {
       const customer = order.customer as any;
       const orderData = {
@@ -83,7 +84,11 @@ export async function PATCH(
         shippingAddress: order.shippingAddress,
       };
 
-      if (value.status === "shipped") {
+      if (value.status === "processing") {
+        kirimNotifikasiPesananDiproses(customer.phone, orderData).catch((err) =>
+          console.error("[WhatsApp] Gagal kirim notifikasi pesanan diproses:", err.message)
+        );
+      } else if (value.status === "shipped") {
         kirimNotifikasiPesananDikirim(customer.phone, orderData).catch((err) =>
           console.error("[WhatsApp] Gagal kirim notifikasi pesanan dikirim:", err.message)
         );

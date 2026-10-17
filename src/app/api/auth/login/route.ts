@@ -3,6 +3,12 @@ import { connectDatabase } from "@/backend/config/db";
 import { User } from "@/backend/models";
 import { successResponse, errorResponse } from "@/backend/utils/apiResponse";
 import { kirimOTP } from "@/backend/services/otpService";
+import { SignJWT } from "jose";
+
+const getJwtSecretKey = () => {
+  const secret = process.env.JWT_SECRET || "bjeans-secret-key-fallback";
+  return new TextEncoder().encode(secret);
+};
 
 export async function POST(request: Request) {
   try {
@@ -29,7 +35,41 @@ export async function POST(request: Request) {
       return errorResponse("Email atau password salah", 401);
     }
 
-    // Kredensial valid → kirim OTP ke email
+    // ── Admin: langsung buat JWT, bypass OTP ──────────────────────────────────
+    if (user.role === "admin") {
+      const userObj = user.toObject();
+      delete userObj.password;
+
+      const token = await new SignJWT({
+        id: userObj._id.toString(),
+        email: userObj.email,
+        role: userObj.role,
+      })
+        .setProtectedHeader({ alg: "HS256" })
+        .setIssuedAt()
+        .setExpirationTime("7d")
+        .sign(getJwtSecretKey());
+
+      const response = successResponse(
+        {
+          message: "Login berhasil!",
+          user: userObj,
+          adminDirect: true,
+        },
+        200
+      );
+      response.cookies.set("auth_token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 7, // 1 week
+        path: "/",
+      });
+
+      return response;
+    }
+
+    // ── Customer: kirim OTP ke email ──────────────────────────────────────────
     await kirimOTP(email, user.name);
 
     return successResponse(

@@ -40,7 +40,7 @@ export default function LoginForm() {
     };
   }, [countdown]);
 
-  // ── STEP 1: Validasi kredensial + kirim OTP ────────────────────────────────
+  // ── STEP 1: Validasi kredensial + kirim OTP (customer) / langsung JWT (admin) ──
   const handleCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -53,10 +53,18 @@ export default function LoginForm() {
       });
       const data = await res.json();
       if (res.ok) {
+        // Admin: langsung redirect tanpa OTP
+        if (data.data?.adminDirect) {
+          const params = new URLSearchParams(window.location.search);
+          const redirect = params.get("redirect");
+          window.location.href = redirect || "/admin/dashboard";
+          return;
+        }
+        // Customer: lanjut ke step OTP
         setStep("otp");
         setCountdown(60);
       } else {
-        setError(data.error || "Login gagal");
+        setError(data.message || data.error || "Login gagal");
       }
     } catch {
       setError("Terjadi kesalahan, coba lagi");
@@ -83,13 +91,11 @@ export default function LoginForm() {
       });
       const data = await res.json();
       if (res.ok) {
-        const userRole = data.data?.user?.role;
         const params = new URLSearchParams(window.location.search);
         const redirect = params.get("redirect");
-        window.location.href =
-          userRole === "admin" ? redirect || "/admin/dashboard" : redirect || "/";
+        window.location.href = redirect || "/";
       } else {
-        setError(data.error || "Verifikasi OTP gagal");
+        setError(data.message || data.error || "Verifikasi OTP gagal");
       }
     } catch {
       setError("Terjadi kesalahan, coba lagi");
@@ -114,7 +120,7 @@ export default function LoginForm() {
         setCountdown(60);
         otpRefs.current[0]?.focus();
       } else {
-        setError(data.error || "Gagal mengirim ulang OTP");
+        setError(data.message || data.error || "Gagal mengirim ulang OTP");
       }
     } catch {
       setError("Terjadi kesalahan");
@@ -160,7 +166,7 @@ export default function LoginForm() {
           Login ke Bjeans
         </h1>
 
-        {/* Step indicator */}
+        {/* Step indicator — hanya tampil untuk customer (ada step OTP) */}
         <div className="flex items-center justify-center gap-2 mb-6">
           <div className={`h-1.5 w-16 rounded-full transition-colors ${step === "credentials" ? "bg-foreground" : "bg-foreground/20"}`} />
           <div className={`h-1.5 w-16 rounded-full transition-colors ${step === "otp" ? "bg-foreground" : "bg-foreground/20"}`} />
@@ -220,7 +226,7 @@ export default function LoginForm() {
             </div>
 
             <p className="text-xs text-center text-muted-foreground">
-              Setelah verifikasi, kode OTP akan dikirim ke email kamu.
+              Kode OTP akan dikirim ke email kamu untuk verifikasi.
             </p>
           </form>
         )}
