@@ -75,6 +75,16 @@ export async function kirimOTP(
 
   otpStore.set(email, { otp, expiresAt });
 
+  // Support Mock Mode untuk testing lokal / staging
+  if (process.env.NOTIFICATION_MOCK_MODE === "true") {
+    console.log(`[OTP Mock Mode] Kode OTP untuk ${email}: ${otp}`);
+    return {
+      success: true,
+      message: `[MOCK MODE] Kode OTP Anda: ${otp}`,
+      channel: "mock",
+    };
+  }
+
   let sentViaWhatsApp = false;
 
   // Coba kirim via WhatsApp jika nomor HP tersedia
@@ -95,14 +105,23 @@ export async function kirimOTP(
 
   // Jika belum terkirim via WhatsApp, kirim via Email
   if (!sentViaWhatsApp) {
-    await sendEmail({
-      to: email,
-      templateCode: "otp_login",
-      variables: {
-        otp,
-        nama: namaUser,
-      },
-    });
+    try {
+      await sendEmail({
+        to: email,
+        templateCode: "otp_login",
+        variables: {
+          otp,
+          nama: namaUser,
+        },
+      });
+    } catch (emailErr: any) {
+      console.error(
+        `[OTP Service] Pengiriman OTP gagal: ${emailErr.message}. Fallback OTP untuk ${email}: ${otp}`
+      );
+      throw new Error(
+        `Gagal mengirim OTP: ${emailErr.message}. Pastikan NGW_API_KEY valid di environment variables.`
+      );
+    }
   }
 
   return {

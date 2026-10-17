@@ -39,6 +39,17 @@ export class NotificationClient {
   }
 
   private async request(endpoint: string, body: any): Promise<any> {
+    if (process.env.NOTIFICATION_MOCK_MODE === "true") {
+      console.log(`[Notification Gateway MOCK] POST ${endpoint}:`, JSON.stringify(body));
+      return { success: true, message: "Mock notification sent", mock: true };
+    }
+
+    if (!this.apiKey) {
+      throw new Error(
+        "NGW_API_KEY belum diisi di Environment Variables (Vercel / .env.local). Silakan tambahkan NGW_API_KEY atau aktifkan NOTIFICATION_MOCK_MODE=true."
+      );
+    }
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeout);
 
