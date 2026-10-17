@@ -233,7 +233,7 @@ export default function LoginForm() {
             </div>
 
             <p className="text-xs text-center text-muted-foreground">
-              Kode OTP akan dikirim ke email kamu untuk verifikasi.
+              Kode OTP akan dikirim ke WhatsApp kamu untuk verifikasi.
             </p>
           </form>
         )}

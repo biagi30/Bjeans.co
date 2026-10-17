@@ -56,6 +56,7 @@ export async function sendWhatsAppOTP(payload: {
       nama: payload.nama,
       otp: payload.otp,
     },
+    body: `Halo ${payload.nama},\n\nKode verifikasi OTP login Bjeans.co Anda adalah: *${payload.otp}*.\n\nKode ini berlaku selama 5 menit. Jangan berikan kode ini kepada siapapun.`,
   });
 
   console.log("[Notification Gateway WhatsApp OTP Response]:", JSON.stringify(result, null, 2));
@@ -63,12 +64,12 @@ export async function sendWhatsAppOTP(payload: {
 }
 
 /**
- * Kirim OTP ke pengguna (langsung via Email)
+ * Kirim OTP ke pengguna (langsung via WhatsApp)
  */
 export async function kirimOTP(
   email: string,
   namaUser: string = "Pengguna",
-  _phone?: string
+  phone?: string
 ): Promise<{ success: boolean; message: string; channel?: string }> {
   const otp = generateOTP();
   const expiresAt = Date.now() + 5 * 60 * 1000; // 5 menit
@@ -85,28 +86,34 @@ export async function kirimOTP(
     };
   }
 
-  // Kirim langsung via Email
+  const targetPhone = phone || "";
+  const formattedPhone = formatPhoneNumber(targetPhone);
+
+  if (!formattedPhone) {
+    throw new Error(
+      `Nomor WhatsApp untuk akun ini (${email}) belum terdaftar atau formatnya tidak valid (${phone || "kosong"}). Pastikan nomor HP terisi di database.`
+    );
+  }
+
+  // Kirim langsung via WhatsApp
   try {
-    await sendEmail({
-      to: email,
-      templateCode: "otp_login",
-      variables: {
-        otp,
-        nama: namaUser,
-      },
+    await sendWhatsAppOTP({
+      to: formattedPhone,
+      nama: namaUser,
+      otp,
     });
 
     return {
       success: true,
-      message: "OTP telah dikirim ke email kamu",
-      channel: "email",
+      message: `OTP telah dikirim ke WhatsApp (${formattedPhone})`,
+      channel: "whatsapp",
     };
-  } catch (emailErr: any) {
+  } catch (waErr: any) {
     console.error(
-      `[OTP Service] Pengiriman OTP email gagal: ${emailErr.message}. Fallback OTP untuk ${email}: ${otp}`
+      `[OTP Service] Pengiriman OTP WhatsApp gagal: ${waErr.message}. Fallback OTP untuk ${email}: ${otp}`
     );
     throw new Error(
-      `Gagal mengirim OTP: ${emailErr.message}. Pastikan NGW_API_KEY valid di environment variables.`
+      `Gagal mengirim OTP ke WhatsApp: ${waErr.message}.`
     );
   }
 }
