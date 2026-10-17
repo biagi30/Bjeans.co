@@ -6,10 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "node -e \"const fs=require('fs'); if(fs.existsSync('node_modules/@notification-gateway/sdk') && (!fs.existsSync('node_modules/notification-gateway-sdk') || fs.lstatSync('node_modules/notification-gateway-sdk').isSymbolicLink())){ if(fs.existsSync('node_modules/notification-gateway-sdk')) fs.rmSync('node_modules/notification-gateway-sdk', {recursive:true, force:true}); fs.cpSync('node_modules/@notification-gateway/sdk', 'node_modules/notification-gateway-sdk', {recursive:true, dereference:true}); }\""
   },
   "dependencies": {
     "@notification-gateway/sdk": "file:../../ProjectX/Notification-Service/packages/sdk",
+    "notification-gateway-sdk": "file:../../ProjectX/Notification-Service/packages/sdk",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "dotenv": "^17.4.2",

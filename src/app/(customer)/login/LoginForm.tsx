@@ -23,6 +23,7 @@ export default function LoginForm() {
   // Shared
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [otpNotice, setOtpNotice] = useState("Kode OTP telah dikirim");
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -61,6 +62,9 @@ export default function LoginForm() {
           return;
         }
         // Customer: lanjut ke step OTP
+        if (data.data?.message) {
+          setOtpNotice(data.data.message);
+        }
         setStep("otp");
         setCountdown(60);
       } else {
@@ -116,6 +120,9 @@ export default function LoginForm() {
       });
       const data = await res.json();
       if (res.ok) {
+        if (data.data?.message) {
+          setOtpNotice(data.data.message);
+        }
         setOtpCode(["", "", "", "", "", ""]);
         setCountdown(60);
         otpRefs.current[0]?.focus();
@@ -226,7 +233,7 @@ export default function LoginForm() {
             </div>
 
             <p className="text-xs text-center text-muted-foreground">
-              Kode OTP akan dikirim ke email kamu untuk verifikasi.
+              Kode OTP akan dikirim ke WhatsApp / Email kamu untuk verifikasi.
             </p>
           </form>
         )}
@@ -236,7 +243,7 @@ export default function LoginForm() {
           <form onSubmit={handleVerifyOtp} className="space-y-6 relative z-10">
             <div className="text-center">
               <p className="text-sm text-muted-foreground">
-                Kode OTP dikirim ke
+                {otpNotice}
               </p>
               <p className="font-semibold text-foreground mt-0.5">{email}</p>
             </div>

@@ -1,17 +1,12 @@
-// WhatsApp Service — menggunakan fetch langsung ke Notification Gateway
-// (menghindari ESM compatibility issue dengan Next.js Turbopack)
-
+// WhatsApp Service — Terintegrasi dengan Notification Gateway SDK
+import { getNotificationClient } from "@/backend/config/notificationClient";
 import { formatPhoneNumber } from "@/backend/utils/phoneUtils";
 
-const NGW_API_KEY = process.env.NGW_API_KEY || "";
-const NGW_BASE_URL = process.env.NGW_BASE_URL || "http://localhost:3001";
-const NGW_TIMEOUT = Number(process.env.NGW_TIMEOUT) || 10000;
-
 /**
- * Kirim pesan WhatsApp via Notification Gateway REST API
+ * Kirim pesan WhatsApp via Notification Gateway SDK
  *
- * Mendukung 2 mode (pola yang sama dengan otpService.ts):
- * 1. Template mode — kirim { templateCode, variables } (seperti template "otp_login" di OTP login)
+ * Mendukung 2 mode:
+ * 1. Template mode — kirim { templateCode, variables } (mis. "otp_login", "order_processing")
  * 2. Raw body mode — kirim { body } langsung (fallback jika template belum dibuat di dashboard NGW)
  */
 async function sendWhatsApp(payload: {
@@ -20,46 +15,20 @@ async function sendWhatsApp(payload: {
   templateCode?: string;
   variables?: Record<string, string>;
 }): Promise<void> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), NGW_TIMEOUT);
-
-  const requestBody: Record<string, any> = {
-    channel: "WHATSAPP",
-    recipient: payload.to,
-  };
-  if (payload.templateCode) {
-    requestBody.templateCode = payload.templateCode;
-    requestBody.variables = payload.variables ?? {};
-  } else {
-    requestBody.body = payload.body;
-  }
+  const client = getNotificationClient();
 
   try {
-    const res = await fetch(`${NGW_BASE_URL}/v1/notifications/send`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": NGW_API_KEY,
-      },
-      body: JSON.stringify(requestBody),
-      signal: controller.signal,
+    const res = await client.whatsapp.send({
+      to: payload.to,
+      body: payload.body,
+      templateCode: payload.templateCode,
+      variables: payload.variables,
     });
 
-    const data = await res.json().catch(() => ({}));
-    console.log("[WhatsApp Notification Response]:", JSON.stringify(data, null, 2));
-
-    if (!res.ok) {
-      throw new Error(
-        (data as any).message || (data as any)?.error?.message || `Notification Gateway error: ${res.status}`
-      );
-    }
+    console.log("[Notification Gateway WhatsApp Response]:", JSON.stringify(res, null, 2));
   } catch (error: any) {
-    if (error.name === "AbortError") {
-      throw new Error(`Request timeout setelah ${NGW_TIMEOUT}ms`);
-    }
+    console.error("[Notification Gateway WhatsApp Error]:", error.message || error);
     throw error;
-  } finally {
-    clearTimeout(timer);
   }
 }
 
@@ -82,8 +51,6 @@ function formatItemsSummary(items: any[]): string {
 
 // ─── Helper: Bangun variabel untuk template NGW ───
 // Placeholder harus sama persis dengan yang dipakai di template dashboard NGW.
-// NGW akan me-render {{nama}}, {{nomor_pesanan}}, {{detail_pesanan}}, {{total}}, {{alamat}}
-// dengan nilai dari objek di bawah ini (mekanisme sama persis seperti template "otp_login").
 function buildTemplateVariables(order: OrderNotificationData): Record<string, string> {
   return {
     nama: order.customerName,
@@ -96,8 +63,6 @@ function buildTemplateVariables(order: OrderNotificationData): Record<string, st
 
 /**
  * Kirim notifikasi WhatsApp memakai template Notification Gateway
- * (mekanisme sama persis seperti "otp_login" di otpService.ts,
- * hanya beda channel: WHATSAPP vs EMAIL).
  */
 async function sendWhatsAppWithTemplate(
   phone: string,
@@ -108,7 +73,7 @@ async function sendWhatsAppWithTemplate(
 }
 
 // ─── Interfaces ───
-interface OrderNotificationData {
+export interface OrderNotificationData {
   orderNumber: string;
   customerName: string;
   items: Array<{

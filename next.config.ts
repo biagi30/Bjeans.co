@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@notification-gateway/sdk"],
+  serverExternalPackages: ["@notification-gateway/sdk", "notification-gateway-sdk"],
   images: {
     remotePatterns: [
       {

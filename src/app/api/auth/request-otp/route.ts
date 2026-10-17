@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       return errorResponse("Email tidak terdaftar", 404);
     }
 
-    const result = await kirimOTP(email, user.name);
+    const result = await kirimOTP(email, user.name, user.phone);
     return successResponse(result, 200);
   } catch (error: any) {
     return errorResponse("Gagal mengirim OTP: " + error.message, 500);

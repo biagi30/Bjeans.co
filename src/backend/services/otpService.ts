@@ -1,9 +1,6 @@
-// OTP Service — menggunakan fetch langsung ke Notification Gateway
-// (menghindari ESM compatibility issue dengan Next.js Turbopack)
-
-const NGW_API_KEY = process.env.NGW_API_KEY || "";
-const NGW_BASE_URL = process.env.NGW_BASE_URL || "http://localhost:3001";
-const NGW_TIMEOUT = Number(process.env.NGW_TIMEOUT) || 10000;
+// OTP Service — Terintegrasi dengan Notification Gateway SDK
+import { getNotificationClient } from "@/backend/config/notificationClient";
+import { formatPhoneNumber } from "@/backend/utils/phoneUtils";
 
 // In-memory OTP store (pakai Redis/DB untuk production)
 interface OtpEntry {
@@ -13,77 +10,108 @@ interface OtpEntry {
 const otpStore = new Map<string, OtpEntry>();
 
 // Generate OTP 6 digit
-function generateOTP(): string {
+export function generateOTP(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
 /**
- * Kirim email via Notification Gateway REST API
+ * Kirim email via Notification Gateway SDK
  */
 async function sendEmail(payload: {
   to: string;
   templateCode: string;
   variables: Record<string, string>;
-}): Promise<void> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), NGW_TIMEOUT);
-
-  try {
-    const res = await fetch(`${NGW_BASE_URL}/v1/notifications/send`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": NGW_API_KEY,
-      },
-      body: JSON.stringify({
-        channel: "EMAIL",
-        recipient: payload.to,
-        templateCode: payload.templateCode,
-        variables: payload.variables,
-      }),
-      signal: controller.signal,
-    });
-
-    const data = await res.json().catch(() => ({}));
-    console.log("[Notification Gateway Response]:", JSON.stringify(data, null, 2));
-
-    if (!res.ok) {
-      throw new Error(
-        (data as any).message || (data as any)?.error?.message || `Notification Gateway error: ${res.status}`
-      );
-    }
-  } catch (error: any) {
-    if (error.name === "AbortError") {
-      throw new Error(`Request timeout setelah ${NGW_TIMEOUT}ms`);
-    }
-    throw error;
-  } finally {
-    clearTimeout(timer);
-  }
+}): Promise<any> {
+  const client = getNotificationClient();
+  const res = await client.email.send({
+    to: payload.to,
+    templateCode: payload.templateCode,
+    variables: payload.variables,
+  });
+  console.log("[Notification Gateway Email Response]:", JSON.stringify(res, null, 2));
+  return res;
 }
 
 /**
- * Kirim OTP ke email pengguna
+ * Kirim WhatsApp OTP via Notification Gateway SDK
+ * Sesuai contoh integrasi:
+ * client.whatsapp.send({
+ *   to: "6281234567890",
+ *   templateCode: "otp_login",
+ *   variables: { nama: "Budi", otp: "123456" }
+ * })
+ */
+export async function sendWhatsAppOTP(payload: {
+  to: string;
+  nama: string;
+  otp: string;
+}): Promise<any> {
+  const client = getNotificationClient();
+  const formattedPhone = formatPhoneNumber(payload.to) || payload.to;
+
+  const result = await client.whatsapp.send({
+    to: formattedPhone,
+    templateCode: "otp_login",
+    variables: {
+      nama: payload.nama,
+      otp: payload.otp,
+    },
+  });
+
+  console.log("[Notification Gateway WhatsApp OTP Response]:", JSON.stringify(result, null, 2));
+  return result;
+}
+
+/**
+ * Kirim OTP ke pengguna (otomatis WhatsApp jika ada phone, fallback ke Email)
  */
 export async function kirimOTP(
   email: string,
-  namaUser: string = "Pengguna"
-): Promise<{ success: boolean; message: string }> {
+  namaUser: string = "Pengguna",
+  phone?: string
+): Promise<{ success: boolean; message: string; channel?: string }> {
   const otp = generateOTP();
   const expiresAt = Date.now() + 5 * 60 * 1000; // 5 menit
 
   otpStore.set(email, { otp, expiresAt });
 
-  await sendEmail({
-    to: email,
-    templateCode: "otp_login",
-    variables: {
-      otp,
-      nama: namaUser,
-    },
-  });
+  let sentViaWhatsApp = false;
 
-  return { success: true, message: "OTP telah dikirim ke email kamu" };
+  // Coba kirim via WhatsApp jika nomor HP tersedia
+  if (phone) {
+    try {
+      await sendWhatsAppOTP({
+        to: phone,
+        nama: namaUser,
+        otp,
+      });
+      sentViaWhatsApp = true;
+    } catch (waErr: any) {
+      console.warn(
+        `[OTP Service] WhatsApp OTP gagal (${waErr.message}), beralih ke Email...`
+      );
+    }
+  }
+
+  // Jika belum terkirim via WhatsApp, kirim via Email
+  if (!sentViaWhatsApp) {
+    await sendEmail({
+      to: email,
+      templateCode: "otp_login",
+      variables: {
+        otp,
+        nama: namaUser,
+      },
+    });
+  }
+
+  return {
+    success: true,
+    message: sentViaWhatsApp
+      ? "OTP telah dikirim ke WhatsApp kamu"
+      : "OTP telah dikirim ke email kamu",
+    channel: sentViaWhatsApp ? "whatsapp" : "email",
+  };
 }
 
 /**

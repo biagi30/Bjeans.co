@@ -69,11 +69,14 @@ export async function POST(request: Request) {
       return response;
     }
 
-    // ── Customer: kirim OTP ke email ──────────────────────────────────────────
-    await kirimOTP(email, user.name);
+    // ── Customer: kirim OTP ke WhatsApp/Email ─────────────────────────────────
+    const otpResult = await kirimOTP(email, user.name, user.phone);
 
     return successResponse(
-      { message: "Kredensial valid. Kode OTP telah dikirim ke email kamu." },
+      {
+        message: otpResult.message || "Kredensial valid. Kode OTP telah dikirim.",
+        channel: otpResult.channel,
+      },
       200
     );
   } catch (error: any) {
