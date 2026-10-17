@@ -1,6 +1,8 @@
 // WhatsApp Service — Terintegrasi dengan Notification Gateway SDK
 import { getNotificationClient } from "@/backend/config/notificationClient";
 import { formatPhoneNumber } from "@/backend/utils/phoneUtils";
+import { connectDatabase } from "@/backend/config/db";
+import { NotificationLog } from "@/backend/models";
 
 /**
  * Kirim pesan WhatsApp via Notification Gateway SDK
@@ -26,6 +28,22 @@ async function sendWhatsApp(payload: {
     });
 
     console.log("[Notification Gateway WhatsApp Response]:", JSON.stringify(res, null, 2));
+
+    const messageId = res?.data?.messageId || res?.messageId;
+    if (messageId) {
+      await connectDatabase();
+      await NotificationLog.create({
+        messageId,
+        channel: "WHATSAPP",
+        recipient: payload.to,
+        templateCode: payload.templateCode,
+        variables: payload.variables,
+        status: res?.data?.status || "QUEUED",
+        metadata: { type: "order_notification" },
+      }).catch((err) =>
+        console.warn("[NotificationLog] Gagal simpan log:", err.message)
+      );
+    }
   } catch (error: any) {
     console.error("[Notification Gateway WhatsApp Error]:", error.message || error);
     throw error;

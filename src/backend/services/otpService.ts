@@ -1,6 +1,8 @@
 // OTP Service — Terintegrasi dengan Notification Gateway SDK
 import { getNotificationClient } from "@/backend/config/notificationClient";
 import { formatPhoneNumber } from "@/backend/utils/phoneUtils";
+import { connectDatabase } from "@/backend/config/db";
+import { NotificationLog } from "@/backend/models";
 
 // In-memory OTP store (pakai Redis/DB untuk production)
 interface OtpEntry {
@@ -29,6 +31,23 @@ async function sendEmail(payload: {
     variables: payload.variables,
   });
   console.log("[Notification Gateway Email Response]:", JSON.stringify(res, null, 2));
+
+  const messageId = res?.data?.messageId || res?.messageId;
+  if (messageId) {
+    await connectDatabase();
+    await NotificationLog.create({
+      messageId,
+      channel: "EMAIL",
+      recipient: payload.to,
+      templateCode: payload.templateCode,
+      variables: payload.variables,
+      status: res?.data?.status || "QUEUED",
+      metadata: { type: "otp_email" },
+    }).catch((err) =>
+      console.warn("[NotificationLog] Gagal simpan log email OTP:", err.message)
+    );
+  }
+
   return res;
 }
 
@@ -60,6 +79,23 @@ export async function sendWhatsAppOTP(payload: {
   });
 
   console.log("[Notification Gateway WhatsApp OTP Response]:", JSON.stringify(result, null, 2));
+
+  const messageId = result?.data?.messageId || result?.messageId;
+  if (messageId) {
+    await connectDatabase();
+    await NotificationLog.create({
+      messageId,
+      channel: "WHATSAPP",
+      recipient: formattedPhone,
+      templateCode: "otp_login",
+      variables: { nama: payload.nama, otp: payload.otp },
+      status: result?.data?.status || "QUEUED",
+      metadata: { type: "otp_whatsapp" },
+    }).catch((err) =>
+      console.warn("[NotificationLog] Gagal simpan log WA OTP:", err.message)
+    );
+  }
+
   return result;
 }
 

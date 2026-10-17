@@ -1,3 +1,5 @@
+import crypto from "crypto";
+
 export const NGW_DEFAULT_BASE_URL = "https://gateway-service-production-9201.up.railway.app";
 
 export interface NotificationClientConfig {
@@ -124,8 +126,66 @@ export class NotificationClient {
   };
 
   webhooks = {
-    verify: (params: { payload: string | Buffer; headers: any; secret: string }): any => {
-      return true;
+    verify: (params: {
+      payload: string | Buffer;
+      headers: any;
+      secret: string;
+    }): boolean => {
+      try {
+        if (!params.secret) {
+          console.warn("[Webhook Verification] Webhook secret kosong.");
+          return false;
+        }
+
+        // Ambil signature dari header (bisa dari instance Headers Next.js atau object)
+        let signature = "";
+        if (params.headers && typeof params.headers.get === "function") {
+          signature =
+            params.headers.get("x-webhook-signature") ||
+            params.headers.get("x-signature") ||
+            params.headers.get("signature") ||
+            "";
+        } else if (params.headers && typeof params.headers === "object") {
+          const lowerHeaders: Record<string, any> = {};
+          for (const key of Object.keys(params.headers)) {
+            lowerHeaders[key.toLowerCase()] = params.headers[key];
+          }
+          signature =
+            lowerHeaders["x-webhook-signature"] ||
+            lowerHeaders["x-signature"] ||
+            lowerHeaders["signature"] ||
+            "";
+        }
+
+        if (!signature) {
+          console.warn("[Webhook Verification] Header signature tidak ditemukan.");
+          return false;
+        }
+
+        const rawPayload =
+          typeof params.payload === "string"
+            ? params.payload
+            : params.payload.toString("utf8");
+
+        const computed = crypto
+          .createHmac("sha256", params.secret)
+          .update(rawPayload)
+          .digest("hex");
+
+        const cleanSignature = signature.replace(/^sha256=/, "");
+
+        if (computed.length !== cleanSignature.length) {
+          return false;
+        }
+
+        return crypto.timingSafeEqual(
+          Buffer.from(computed, "utf8"),
+          Buffer.from(cleanSignature, "utf8")
+        );
+      } catch (err: any) {
+        console.error("[Webhook Verification Error]:", err.message || err);
+        return false;
+      }
     },
   };
 
