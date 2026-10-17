@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["@notification-gateway/sdk", "notification-gateway-sdk"],
   images: {
     remotePatterns: [
       {

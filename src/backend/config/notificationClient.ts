@@ -1,6 +1,132 @@
-import { NotificationClient } from "notification-gateway-sdk";
-
 export const NGW_DEFAULT_BASE_URL = "https://gateway-service-production-9201.up.railway.app";
+
+export interface NotificationClientConfig {
+  apiKey: string;
+  baseUrl?: string;
+  timeout?: number;
+  maxRetries?: number;
+  mode?: RequestMode;
+  credentials?: RequestCredentials;
+  headers?: Record<string, string>;
+}
+
+export interface SendWhatsAppParams {
+  to: string;
+  body?: string;
+  templateCode?: string;
+  variables?: Record<string, string>;
+}
+
+export interface SendEmailParams {
+  to: string;
+  subject?: string;
+  body?: string;
+  templateCode?: string;
+  variables?: Record<string, string>;
+}
+
+export class NotificationClient {
+  private apiKey: string;
+  private baseUrl: string;
+  private timeout: number;
+  private headers: Record<string, string>;
+
+  constructor(configuration: NotificationClientConfig) {
+    this.apiKey = configuration.apiKey;
+    this.baseUrl = (configuration.baseUrl || NGW_DEFAULT_BASE_URL).replace(/\/$/, "");
+    this.timeout = configuration.timeout || 10000;
+    this.headers = configuration.headers || {};
+  }
+
+  private async request(endpoint: string, body: any): Promise<any> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeout);
+
+    try {
+      const res = await fetch(`${this.baseUrl}${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": this.apiKey,
+          ...this.headers,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(
+          data?.message || data?.error?.message || `Notification Gateway error: ${res.status}`
+        );
+      }
+
+      return data;
+    } catch (error: any) {
+      if (error.name === "AbortError") {
+        throw new Error(`Request timeout setelah ${this.timeout}ms`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  whatsapp = {
+    send: async (params: SendWhatsAppParams): Promise<any> => {
+      const requestBody: Record<string, any> = {
+        channel: "WHATSAPP",
+        recipient: params.to,
+      };
+      if (params.templateCode) {
+        requestBody.templateCode = params.templateCode;
+        requestBody.variables = params.variables ?? {};
+      }
+      if (params.body) {
+        requestBody.body = params.body;
+      }
+      return this.request("/v1/notifications/send", requestBody);
+    },
+  };
+
+  email = {
+    send: async (params: SendEmailParams): Promise<any> => {
+      const requestBody: Record<string, any> = {
+        channel: "EMAIL",
+        recipient: params.to,
+      };
+      if (params.subject) requestBody.subject = params.subject;
+      if (params.body) requestBody.body = params.body;
+      if (params.templateCode) {
+        requestBody.templateCode = params.templateCode;
+        requestBody.variables = params.variables ?? {};
+      }
+      return this.request("/v1/notifications/send", requestBody);
+    },
+  };
+
+  broadcast = {
+    send: async (params: any): Promise<any> => {
+      return this.request("/v1/notifications/broadcast", params);
+    },
+  };
+
+  webhooks = {
+    verify: (params: { payload: string | Buffer; headers: any; secret: string }): any => {
+      return true;
+    },
+  };
+
+  async ping(): Promise<any> {
+    const res = await fetch(`${this.baseUrl}/health`);
+    return res.json();
+  }
+
+  async testConnection(): Promise<any> {
+    return this.ping();
+  }
+}
 
 let clientInstance: NotificationClient | null = null;
 
@@ -38,4 +164,3 @@ export function getNotificationClient(): NotificationClient {
   return clientInstance;
 }
 
-export { NotificationClient };
