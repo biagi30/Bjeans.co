@@ -1,6 +1,6 @@
 import { NotificationClient } from "notification-gateway-sdk";
 
-export const NGW_DEFAULT_BASE_URL = "https://gateway-service-production-9201.up.railway.app";
+export const NGW_DEFAULT_BASE_URL = "https://gateway-service-production-b6bc64ad.up.railway.app";
 
 let clientInstance: NotificationClient | null = null;
 

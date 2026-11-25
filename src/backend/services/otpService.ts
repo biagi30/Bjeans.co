@@ -75,6 +75,21 @@ export async function kirimOTP(
 
   otpStore.set(email, { otp, expiresAt });
 
+  if (process.env.NOTIFICATION_MOCK_MODE === "true") {
+    const mockChannel = phone ? "whatsapp" : "email";
+    console.log(
+      `[OTP Service][MOCK MODE] OTP untuk ${email}${phone ? ` (${phone})` : ""}: ${otp} (channel: ${mockChannel})`
+    );
+    return {
+      success: true,
+      message:
+        mockChannel === "whatsapp"
+          ? "OTP telah dikirim ke WhatsApp kamu (Mock Mode)"
+          : "OTP telah dikirim ke email kamu (Mock Mode)",
+      channel: mockChannel,
+    };
+  }
+
   let sentViaWhatsApp = false;
 
   // Coba kirim via WhatsApp jika nomor HP tersedia
@@ -95,14 +110,23 @@ export async function kirimOTP(
 
   // Jika belum terkirim via WhatsApp, kirim via Email
   if (!sentViaWhatsApp) {
-    await sendEmail({
-      to: email,
-      templateCode: "otp_login",
-      variables: {
-        otp,
-        nama: namaUser,
-      },
-    });
+    try {
+      await sendEmail({
+        to: email,
+        templateCode: "otp_login",
+        variables: {
+          otp,
+          nama: namaUser,
+        },
+      });
+    } catch (emailErr: any) {
+      console.error(
+        `[OTP Service] Email OTP juga gagal (${emailErr?.message || emailErr})`
+      );
+      throw new Error(
+        `Gagal mengirim OTP via WhatsApp maupun Email: ${emailErr?.message || "Gateway error"}`
+      );
+    }
   }
 
   return {
