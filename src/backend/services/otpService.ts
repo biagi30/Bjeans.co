@@ -1,6 +1,8 @@
 // OTP Service — Terintegrasi dengan Notification Gateway SDK
 import { getNotificationClient } from "@/backend/config/notificationClient";
 import { formatPhoneNumber } from "@/backend/utils/phoneUtils";
+import { connectDatabase } from "@/backend/config/db";
+import { NotificationLog } from "@/backend/models";
 
 // In-memory OTP store (pakai Redis/DB untuk production)
 interface OtpEntry {
@@ -29,6 +31,23 @@ async function sendEmail(payload: {
     variables: payload.variables,
   });
   console.log("[Notification Gateway Email Response]:", JSON.stringify(res, null, 2));
+
+  const messageId = res?.data?.messageId || res?.messageId;
+  if (messageId) {
+    await connectDatabase();
+    await NotificationLog.create({
+      messageId,
+      channel: "EMAIL",
+      recipient: payload.to,
+      templateCode: payload.templateCode,
+      variables: payload.variables,
+      status: res?.data?.status || "QUEUED",
+      metadata: { type: "otp_email" },
+    }).catch((err) =>
+      console.warn("[NotificationLog] Gagal simpan log email OTP:", err.message)
+    );
+  }
+
   return res;
 }
 
@@ -56,14 +75,32 @@ export async function sendWhatsAppOTP(payload: {
       nama: payload.nama,
       otp: payload.otp,
     },
+    body: `Halo ${payload.nama},\n\nKode verifikasi OTP login Bjeans.co Anda adalah: *${payload.otp}*.\n\nKode ini berlaku selama 5 menit. Jangan berikan kode ini kepada siapapun.`,
   });
 
   console.log("[Notification Gateway WhatsApp OTP Response]:", JSON.stringify(result, null, 2));
+
+  const messageId = result?.data?.messageId || result?.messageId;
+  if (messageId) {
+    await connectDatabase();
+    await NotificationLog.create({
+      messageId,
+      channel: "WHATSAPP",
+      recipient: formattedPhone,
+      templateCode: "otp_login",
+      variables: { nama: payload.nama, otp: payload.otp },
+      status: result?.data?.status || "QUEUED",
+      metadata: { type: "otp_whatsapp" },
+    }).catch((err) =>
+      console.warn("[NotificationLog] Gagal simpan log WA OTP:", err.message)
+    );
+  }
+
   return result;
 }
 
 /**
- * Kirim OTP ke pengguna (otomatis WhatsApp jika ada phone, fallback ke Email)
+ * Kirim OTP ke pengguna (prioritas WhatsApp jika nomor valid, fallback ke Email)
  */
 export async function kirimOTP(
   email: string,
@@ -75,40 +112,43 @@ export async function kirimOTP(
 
   otpStore.set(email, { otp, expiresAt });
 
+  // Support Mock Mode untuk testing lokal / staging
   if (process.env.NOTIFICATION_MOCK_MODE === "true") {
     const mockChannel = phone ? "whatsapp" : "email";
     console.log(
-      `[OTP Service][MOCK MODE] OTP untuk ${email}${phone ? ` (${phone})` : ""}: ${otp} (channel: ${mockChannel})`
+      `[OTP Mock Mode] Kode OTP untuk ${email}${phone ? ` (${phone})` : ""}: ${otp} (channel: ${mockChannel})`
     );
     return {
       success: true,
-      message:
-        mockChannel === "whatsapp"
-          ? "OTP telah dikirim ke WhatsApp kamu (Mock Mode)"
-          : "OTP telah dikirim ke email kamu (Mock Mode)",
-      channel: mockChannel,
+      message: `[MOCK MODE] Kode OTP Anda: ${otp}`,
+      channel: "mock",
     };
   }
 
+  const formattedPhone = phone ? formatPhoneNumber(phone) : null;
   let sentViaWhatsApp = false;
 
-  // Coba kirim via WhatsApp jika nomor HP tersedia
-  if (phone) {
+  // Coba kirim via WhatsApp jika nomor HP valid tersedia
+  if (formattedPhone) {
     try {
       await sendWhatsAppOTP({
-        to: phone,
+        to: formattedPhone,
         nama: namaUser,
         otp,
       });
       sentViaWhatsApp = true;
     } catch (waErr: any) {
       console.warn(
-        `[OTP Service] WhatsApp OTP gagal (${waErr.message}), beralih ke Email...`
+        `[OTP Service] WhatsApp OTP gagal (${waErr?.message || waErr}), beralih ke Email...`
       );
     }
+  } else if (phone) {
+    console.warn(
+      `[OTP Service] Format nomor WhatsApp tidak valid (${phone}), beralih ke Email...`
+    );
   }
 
-  // Jika belum terkirim via WhatsApp, kirim via Email
+  // Fallback ke Email jika WhatsApp tidak tersedia atau gagal
   if (!sentViaWhatsApp) {
     try {
       await sendEmail({
@@ -121,7 +161,7 @@ export async function kirimOTP(
       });
     } catch (emailErr: any) {
       console.error(
-        `[OTP Service] Email OTP juga gagal (${emailErr?.message || emailErr})`
+        `[OTP Service] Email OTP juga gagal (${emailErr?.message || emailErr}).`
       );
       throw new Error(
         `Gagal mengirim OTP via WhatsApp maupun Email: ${emailErr?.message || "Gateway error"}`
@@ -132,8 +172,8 @@ export async function kirimOTP(
   return {
     success: true,
     message: sentViaWhatsApp
-      ? "OTP telah dikirim ke WhatsApp kamu"
-      : "OTP telah dikirim ke email kamu",
+      ? `OTP telah dikirim ke WhatsApp (${formattedPhone})`
+      : `OTP telah dikirim ke Email (${email})`,
     channel: sentViaWhatsApp ? "whatsapp" : "email",
   };
 }

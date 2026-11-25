@@ -5,3 +5,5 @@ export { CustomOption } from "./CustomOption";
 export { Cart } from "./Cart";
 export { Order } from "./Order";
 export { MeasurementProfile } from "./MeasurementProfile";
+export { NotificationLog } from "./NotificationLog";
+export { ProcessedWebhook } from "./ProcessedWebhook";
